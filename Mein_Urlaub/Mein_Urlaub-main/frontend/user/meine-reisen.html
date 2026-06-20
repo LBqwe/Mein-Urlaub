@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Meine Reisen – Mein Urlaub</title>
+  <link rel="icon" type="image/png" href="../images/Logo.png" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+
+<!-- LOGO LIGHTBOX -->
+<div class="logo-lightbox" id="logoLightbox" onclick="if(event.target===this)closeLogo()">
+  <img src="../images/Logo.png" alt="Mein Urlaub" />
+</div>
+
+<nav>
+  <a href="index.html" class="nav-logo" onclick="event.preventDefault();openLogo()"><img src="../images/Logo.png" alt="Mein Urlaub" /></a>
+  <ul class="nav-links">
+    <li><a href="index.html#hotels">Hotels</a></li>
+    <li><a href="index.html#fluege">Flüge</a></li>
+    <li><a href="index.html#mietwagen">Mietwagen</a></li>
+    <li><a href="index.html#pakete">Pakete</a></li>
+    <li><a href="index.html#bewertungen">Bewertungen</a></li>
+  </ul>
+  <div class="nav-user-wrap" id="navUserWrap">
+    <div class="nav-avatar" id="navAvatar" onclick="toggleUserMenu()">U</div>
+    <div class="nav-dropdown" id="navDropdown">
+      <span class="nav-dropdown-name" id="navDropdownName">Benutzer</span>
+      <div class="nav-dropdown-divider"></div>
+      <a onclick="openProfile(); toggleUserMenu()">Mein Profil</a>
+      <a href="meine-reisen.html" class="nav-links-active">Meine Reisen</a>
+      <div class="nav-dropdown-divider"></div>
+      <a onclick="logout()" class="nav-dropdown-logout">Abmelden</a>
+    </div>
+  </div>
+</nav>
+
+<div style="padding-top: 80px; min-height: 100vh; background: var(--warm-white);">
+  <div style="max-width: 1100px; margin: 0 auto; padding: 4rem 2rem 5rem;">
+
+    <!-- HEADING -->
+    <p class="section-label">Übersicht</p>
+    <h1 class="section-title">Meine <em>Reisen</em></h1>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('alle', this)">Alle</button>
+      <button class="tab-btn" onclick="switchTab('hotels', this)">Hotels</button>
+      <button class="tab-btn" onclick="switchTab('fluege', this)">Flüge</button>
+      <button class="tab-btn" onclick="switchTab('mietwagen', this)">Mietwagen</button>
+      <button class="tab-btn" onclick="switchTab('pakete', this)">Pakete</button>
+    </div>
+
+    <!-- ALLE BUCHUNGEN -->
+    <div class="tab-content active" id="tab-alle">
+      <div class="table-container">
+        <div class="table-header">
+          <span class="table-title">Alle Buchungen</span>
+          <div style="display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap;">
+            <input class="search-input" id="alleSearch" placeholder="Suche …" oninput="filterAlle()" />
+            <select class="search-input" id="alleTypFilter" onchange="filterAlle()" style="width:auto; cursor:pointer;">
+              <option value="">Alle Typen</option>
+              <option value="hotel">Hotels</option>
+              <option value="flug">Flüge</option>
+              <option value="mietwagen">Mietwagen</option>
+            </select>
+          </div>
+        </div>
+        <div id="alleTableBody"><div class="loading">Lädt …</div></div>
+      </div>
+    </div>
+
+    <!-- HOTELS -->
+    <div class="tab-content" id="tab-hotels">
+      <div class="table-container">
+        <div class="table-header">
+          <span class="table-title">Gebuchte Hotels</span>
+          <input class="search-input" id="hotelSearch" placeholder="Suche …" oninput="filterTab('hotel', this.value)" />
+        </div>
+        <div id="hotelsTableBody"><div class="loading">Lädt …</div></div>
+      </div>
+    </div>
+
+    <!-- FLÜGE -->
+    <div class="tab-content" id="tab-fluege">
+      <div class="table-container">
+        <div class="table-header">
+          <span class="table-title">Gebuchte Flüge</span>
+          <input class="search-input" id="flugSearch" placeholder="Suche …" oninput="filterTab('flug', this.value)" />
+        </div>
+        <div id="flightsTableBody"><div class="loading">Lädt …</div></div>
+      </div>
+    </div>
+
+    <!-- MIETWAGEN -->
+    <div class="tab-content" id="tab-mietwagen">
+      <div class="table-container">
+        <div class="table-header">
+          <span class="table-title">Gebuchte Mietwagen</span>
+          <input class="search-input" id="mietwagenSearch" placeholder="Suche …" oninput="filterTab('mietwagen', this.value)" />
+        </div>
+        <div id="rentalsTableBody"><div class="loading">Lädt …</div></div>
+      </div>
+    </div>
+
+    <!-- PAKETE -->
+    <div class="tab-content" id="tab-pakete">
+      <div class="table-container">
+        <div class="table-header">
+          <span class="table-title">Gebuchte Pakete</span>
+          <input class="search-input" id="paketeSearch" placeholder="Suche …" oninput="filterPakete(this.value)" />
+        </div>
+        <div id="paketeTableBody"><div class="loading">Lädt …</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- BOOKING DETAIL MODAL -->
+<div class="booking-detail-overlay" id="bookingDetailOverlay" onclick="if(event.target===this)closeBookingDetail()">
+  <div class="booking-detail-box">
+    <button class="bd-close" onclick="closeBookingDetail()">×</button>
+    <div id="bookingDetailContent"></div>
+  </div>
+</div>
+
+<!-- PROFIL MODAL -->
+<div class="modal-overlay" id="profileModal">
+  <div class="modal-box" style="max-width:560px;">
+    <button class="modal-close" onclick="closeProfile()">×</button>
+    <h3>Mein Profil</h3>
+    <div id="profileView">
+      <div class="profile-row"><span class="profile-label">Benutzername</span><span id="pvUsername">—</span></div>
+      <div class="profile-row"><span class="profile-label">E-Mail</span><span id="pvEmail">—</span></div>
+      <div class="profile-row"><span class="profile-label">Telefon</span><span id="pvTelefon">—</span></div>
+      <div class="profile-row"><span class="profile-label">Adresse</span><span id="pvAdresse">—</span></div>
+      <div class="profile-row"><span class="profile-label">Wohnort</span><span id="pvWohnort">—</span></div>
+      <button class="btn-submit" style="margin-top:1.5rem;" onclick="switchToEdit()">Bearbeiten</button>
+    </div>
+    <div id="profileEdit" style="display:none;">
+      <div class="form-group"><label>E-Mail *</label><input id="peEmail" type="email" /></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>PLZ &amp; Wohnort *</label>
+          <input id="peWohnort" type="text" oninput="debounceWohnort('peWohnort','peWohnortHint')" autocomplete="off" />
+          <span id="peWohnortHint" class="wohnort-hint"></span>
+        </div>
+        <div class="form-group"><label>Telefon</label><input id="peTelefon" type="tel" /></div>
+      </div>
+      <div class="form-group"><label>Adresse</label><input id="peAdresse" type="text" /></div>
+      <div style="border-top:1px solid var(--sand);margin:1.25rem 0 1rem;padding-top:1.25rem;">
+        <p style="font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:1rem;">Passwort ändern (optional)</p>
+        <div class="form-group"><label>Aktuelles Passwort</label><input id="peCurrentPw" type="password" placeholder="Aktuelles Passwort" /></div>
+        <div class="form-row">
+          <div class="form-group"><label>Neues Passwort</label><input id="peNewPw" type="password" placeholder="Neues Passwort" /></div>
+          <div class="form-group"><label>Bestätigen</label><input id="peNewPwConfirm" type="password" placeholder="Wiederholen" /></div>
+        </div>
+        <p id="pePasswordError" style="display:none;color:var(--danger);font-size:0.78rem;margin-top:-0.5rem;margin-bottom:0.75rem;">Passwörter stimmen nicht überein.</p>
+      </div>
+      <div style="display:flex;gap:1rem;margin-top:0.5rem;">
+        <button class="btn-submit" style="flex:1;" onclick="saveProfile()">Speichern</button>
+        <button class="btn-submit" style="flex:1;background:var(--taupe);" onclick="switchToView()">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIFICATION -->
+<div class="notif-overlay" id="notifOverlay">
+  <div class="notif-box">
+    <div class="notif-bar" id="notifBar"></div>
+    <div class="notif-content">
+      <p class="notif-title" id="notifTitle"></p>
+      <p class="notif-msg" id="notifMsg"></p>
+      <div class="notif-actions" id="notifActions">
+        <button class="notif-btn-ok" onclick="closeNotif()">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-logo" onclick="openLogo()" style="cursor:zoom-in"><img src="../images/Logo.png" alt="Mein Urlaub" /></div>
+  <p>© 2026 · DHBW Heilbronn · Verteilte Systeme</p>
+  <p style="font-size:0.75rem; margin-top:0.25rem; opacity:0.75;">Lara Buchholz · Shania Abdulla · Anna Harrer</p>
+</footer>
+
+<script>
+  const API   = window.location.origin;
+  const token = localStorage.getItem('token');
+
+  let allBookings = [];
+
+  // ── NOTIFICATION ─────────────────────────────────────────────
+  function showNotif(type, msg) {
+    const titles = { success: 'Erfolg', error: 'Fehler', info: 'Hinweis' };
+    document.getElementById('notifTitle').textContent = titles[type] || 'Hinweis';
+    document.getElementById('notifTitle').className   = 'notif-title ' + type;
+    document.getElementById('notifMsg').textContent   = msg;
+    document.getElementById('notifBar').className     = 'notif-bar ' + type;
+    document.getElementById('notifActions').innerHTML =
+      '<button class="notif-btn-ok" onclick="closeNotif()">OK</button>';
+    document.getElementById('notifOverlay').classList.add('open');
+  }
+  function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function showConfirm(msg, onConfirm) {
+    document.getElementById('notifTitle').textContent = 'Bestätigung';
+    document.getElementById('notifTitle').className   = 'notif-title';
+    document.getElementById('notifMsg').innerHTML     = escHtml(msg).replace(/\n/g, '<br>');
+    document.getElementById('notifBar').className     = 'notif-bar info';
+    document.getElementById('notifActions').innerHTML =
+      '<button class="notif-btn-cancel" onclick="closeNotif()">Abbrechen</button>' +
+      '<button class="notif-btn-ok" id="notifConfirmBtn">Ja, stornieren</button>';
+    document.getElementById('notifOverlay').classList.add('open');
+    document.getElementById('notifConfirmBtn').onclick = () => { closeNotif(); onConfirm(); };
+  }
+  function closeNotif() { document.getElementById('notifOverlay').classList.remove('open'); }
+
+  // ── INIT ──────────────────────────────────────────────────────
+  async function init() {
+    if (!token) { window.location.href = 'index.html'; return; }
+    const username = localStorage.getItem('username') || 'U';
+    document.getElementById('navAvatar').textContent      = username.charAt(0).toUpperCase();
+    document.getElementById('navDropdownName').textContent = 'Hallo ' + username + '!';
+    await loadBookings();
+  }
+
+  function toggleUserMenu() { document.getElementById('navDropdown').classList.toggle('open'); }
+  document.addEventListener('click', e => {
+    const wrap = document.getElementById('navUserWrap');
+    if (wrap && !wrap.contains(e.target)) document.getElementById('navDropdown').classList.remove('open');
+  });
+
+  function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('username');
+    window.location.href = 'index.html';
+  }
+
+  // ── PROFIL ───────────────────────────────────────────────────
+  const wohnortCache = {};
+  const wohnortTimers = {};
+
+  function fillProfileFields(u) {
+    document.getElementById('pvUsername').textContent = u.username || '—';
+    document.getElementById('pvEmail').textContent    = u.email    || '—';
+    document.getElementById('pvTelefon').textContent  = u.telefon  || '—';
+    document.getElementById('pvAdresse').textContent  = u.adresse  || '—';
+    document.getElementById('pvWohnort').textContent  = u.wohnort  || '—';
+    document.getElementById('peEmail').value    = u.email    || '';
+    document.getElementById('peTelefon').value  = u.telefon  || '';
+    document.getElementById('peAdresse').value  = u.adresse  || '';
+    const peW = document.getElementById('peWohnort');
+    peW.value = u.wohnort || '';
+    peW.dataset.wohnortOk = u.wohnort ? 'true' : '';
+    document.getElementById('peWohnortHint').textContent = '';
+  }
+
+  async function openProfile() {
+    document.getElementById('profileModal').classList.add('open');
+    try {
+      const res = await fetch(`${API}/auth/me`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const user = await res.json();
+        fillProfileFields(user);
+      }
+    } catch {}
+    switchToView();
+  }
+  function closeProfile() {
+    document.getElementById('profileModal').classList.remove('open');
+  }
+  function switchToView() {
+    document.getElementById('profileView').style.display = 'block';
+    document.getElementById('profileEdit').style.display = 'none';
+  }
+  function switchToEdit() {
+    document.getElementById('profileView').style.display = 'none';
+    document.getElementById('profileEdit').style.display = 'block';
+    document.getElementById('peCurrentPw').value = '';
+    document.getElementById('peNewPw').value = '';
+    document.getElementById('peNewPwConfirm').value = '';
+    document.getElementById('pePasswordError').style.display = 'none';
+  }
+  async function saveProfile() {
+    const newPw        = document.getElementById('peNewPw').value;
+    const newPwConfirm = document.getElementById('peNewPwConfirm').value;
+    const errorEl      = document.getElementById('pePasswordError');
+    if (newPw && newPw !== newPwConfirm) { errorEl.style.display = 'block'; return; }
+    errorEl.style.display = 'none';
+
+    const peWohnortInput = document.getElementById('peWohnort');
+    if (peWohnortInput.dataset.wohnortOk !== 'true') {
+      await validateWohnort('peWohnort', 'peWohnortHint');
+      if (peWohnortInput.dataset.wohnortOk !== 'true') {
+        return showNotif('error', 'Bitte gib einen gültigen Wohnort ein.');
+      }
+    }
+
+    const body = {
+      email:   document.getElementById('peEmail').value,
+      telefon: document.getElementById('peTelefon').value,
+      adresse: document.getElementById('peAdresse').value,
+      wohnort: document.getElementById('peWohnort').value
+    };
+    if (newPw) {
+      body.currentPassword = document.getElementById('peCurrentPw').value;
+      body.newPassword     = newPw;
+    }
+    const res = await fetch(`${API}/auth/me`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify(body)
+    });
+    if (res.ok) {
+      const user = await res.json();
+      fillProfileFields(user);
+      switchToView();
+      showNotif('success', 'Profil gespeichert.');
+    } else {
+      const d = await res.json();
+      showNotif('error', d.message || 'Fehler beim Speichern.');
+    }
+  }
+
+  async function validateWohnort(inputId, hintId) {
+    const input = document.getElementById(inputId);
+    const hint  = document.getElementById(hintId);
+    const val   = input.value.trim();
+    if (!val) { hint.textContent = ''; hint.className = 'wohnort-hint'; input.dataset.wohnortOk = ''; return; }
+    hint.textContent = '⏳ Prüfe …'; hint.className = 'wohnort-hint checking';
+    if (wohnortCache[val]) { applyWohnortResult(input, hint, wohnortCache[val]); return; }
+    try {
+      const res  = await fetch(
+        'https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(val + ', Deutschland') + '&format=json&limit=1&addressdetails=1',
+        { headers: { 'Accept-Language': 'de' } }
+      );
+      const data = await res.json();
+      if (data.length) {
+        const a = data[0].address;
+        const parts = [a.city || a.town || a.village || a.municipality, a.state].filter(Boolean);
+        const display = parts.join(', ') || data[0].display_name.split(',').slice(0, 2).join(',').trim();
+        wohnortCache[val] = { ok: true, display, lat: +data[0].lat, lon: +data[0].lon };
+      } else {
+        wohnortCache[val] = { ok: false };
+      }
+    } catch {
+      wohnortCache[val] = { ok: false };
+    }
+    applyWohnortResult(input, hint, wohnortCache[val]);
+  }
+  function applyWohnortResult(input, hint, result) {
+    if (result.ok) {
+      hint.textContent = '✓ Gefunden: ' + result.display;
+      hint.className   = 'wohnort-hint ok';
+      input.dataset.wohnortOk = 'true';
+    } else {
+      hint.textContent = '✗ Ort nicht gefunden. Bitte PLZ + Stadt angeben, z. B. „74072 Heilbronn".';
+      hint.className   = 'wohnort-hint error';
+      input.dataset.wohnortOk = '';
+    }
+  }
+  function debounceWohnort(inputId, hintId) {
+    clearTimeout(wohnortTimers[inputId]);
+    document.getElementById(inputId).dataset.wohnortOk = '';
+    document.getElementById(hintId).textContent = '';
+    wohnortTimers[inputId] = setTimeout(() => validateWohnort(inputId, hintId), 600);
+  }
+
+  // ── TABS ─────────────────────────────────────────────────────
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + name).classList.add('active');
+  }
+
+  // ── STORNIEREN ───────────────────────────────────────────────
+  function stornieren(bookingId) {
+    const booking   = allBookings.find(b => b._id === bookingId);
+    if (booking && isBookingPast(booking)) {
+      showNotif('error', 'Vergangene Buchungen können nicht storniert werden.');
+      return;
+    }
+    const paketNr   = booking?.details?.paketNr;
+    const paketGruppe = paketNr
+      ? allBookings.filter(b => b.details?.paketNr === paketNr)
+      : null;
+
+    let msg = 'Möchten Sie diese Buchung wirklich stornieren?';
+    if (paketGruppe && paketGruppe.length > 1) {
+      const typen = paketGruppe.map(b => {
+        if (b.serviceTyp === 'hotel')     return '🏨 ' + b.details.name;
+        if (b.serviceTyp === 'flug')      return '✈️ ' + b.details.abflugort + ' → ' + b.details.zielort;
+        if (b.serviceTyp === 'mietwagen') return '🚗 ' + b.details.marke + ' ' + b.details.modell;
+        return b.serviceTyp;
+      }).join(', ');
+      msg = `Diese Buchung gehört zu Paket ${paketNr}. Bei Stornierung werden alle ${paketGruppe.length} Leistungen des Pakets storniert:\n\n${typen}`;
+    }
+
+    showConfirm(msg, async () => {
+      const idsToDelete = paketGruppe ? paketGruppe.map(b => b._id) : [bookingId];
+      const results = await Promise.all(idsToDelete.map(id =>
+        fetch(`${API}/bookings/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ));
+      const anyFailed = results.some(r => !r.ok);
+      await loadBookings();
+      if (anyFailed) {
+        showNotif('error', 'Einige Stornierungen sind fehlgeschlagen. Bitte prüfen Sie Ihre Buchungen.');
+      } else if (paketGruppe && paketGruppe.length > 1) {
+        showNotif('success', `Paket ${paketNr} wurde vollständig storniert.`);
+      } else {
+        showNotif('success', 'Buchung wurde erfolgreich storniert.');
+      }
+    });
+  }
+
+  // ── LOAD ─────────────────────────────────────────────────────
+  async function loadBookings() {
+    const errIds = ['alleTableBody','hotelsTableBody','flightsTableBody','rentalsTableBody','paketeTableBody'];
+    try {
+      const res = await fetch(`${API}/bookings/me`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) {
+        errIds.forEach(id => { document.getElementById(id).innerHTML = '<div class="empty-state">Buchungen konnten nicht geladen werden.</div>'; });
+        return;
+      }
+      const bookings = await res.json();
+      // Neueste Buchung zuerst
+      allBookings = bookings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      renderAll();
+    } catch {
+      errIds.forEach(id => { document.getElementById(id).innerHTML = '<div class="empty-state">Server nicht erreichbar.</div>'; });
+    }
+  }
+
+  function isPaket(b) { return !!b.details?.paketRabatt; }
+
+  function renderAll() {
+    filterAlle();
+    renderHotels(allBookings.filter(b => b.serviceTyp === 'hotel' && !isPaket(b)));
+    renderFluege(allBookings.filter(b => b.serviceTyp === 'flug'  && !isPaket(b)));
+    renderMietwagen(allBookings.filter(b => b.serviceTyp === 'mietwagen' && !isPaket(b)));
+    renderPakete(allBookings.filter(isPaket));
+  }
+
+  // ── FILTER ───────────────────────────────────────────────────
+  function matchesSearch(b, term) {
+    if (!term) return true;
+    const t = term.toLowerCase();
+    return JSON.stringify(b.details).toLowerCase().includes(t)
+        || (b.von ? new Date(b.von).toLocaleDateString('de-DE') : '').includes(t)
+        || (b.bis ? new Date(b.bis).toLocaleDateString('de-DE') : '').includes(t);
+  }
+
+  function filterPakete(term) {
+    let list = allBookings.filter(isPaket);
+    if (term) list = list.filter(b => matchesSearch(b, term));
+    renderPakete(list);
+  }
+
+  function filterAlle() {
+    const term = document.getElementById('alleSearch').value;
+    const typ  = document.getElementById('alleTypFilter').value;
+    let list   = allBookings;
+    if (typ)  list = list.filter(b => b.serviceTyp === typ);
+    if (term) list = list.filter(b => matchesSearch(b, term));
+    renderAlle(list);
+  }
+
+  function filterTab(serviceTyp, term) {
+    let list = allBookings.filter(b => b.serviceTyp === serviceTyp && !isPaket(b));
+    if (term) list = list.filter(b => matchesSearch(b, term));
+    if (serviceTyp === 'hotel')     renderHotels(list);
+    if (serviceTyp === 'flug')      renderFluege(list);
+    if (serviceTyp === 'mietwagen') renderMietwagen(list);
+  }
+
+  // ── HELPERS ──────────────────────────────────────────────────
+  function fmtDate(d)  { return d ? new Date(d).toLocaleDateString('de-DE') : '—'; }
+  function fmtDt(d)    { return d ? new Date(d).toLocaleString('de-DE') : '—'; }
+  function flugdauer(a, b) {
+    if (!a || !b) return '—';
+    const diff = new Date(b) - new Date(a);
+    if (diff <= 0) return '—';
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    return h > 0 ? `${h}h${m > 0 ? ' ' + m + 'min' : ''}` : `${m}min`;
+  }
+  function zeitraum(b) {
+    if (!b.von && !b.bis) return '—';
+    if (b.von && b.bis && fmtDate(b.von) === fmtDate(b.bis)) return fmtDate(b.von);
+    return fmtDate(b.von) + ' – ' + fmtDate(b.bis);
+  }
+
+  function mergeDateTime(bookedDate, originalDateTime) {
+    if (!bookedDate || !originalDateTime) return originalDateTime || bookedDate;
+    const d = new Date(bookedDate);
+    const t = new Date(originalDateTime);
+    d.setHours(t.getHours(), t.getMinutes(), t.getSeconds(), 0);
+    return d.toISOString();
+  }
+
+  const TYP_BADGE = {
+    hotel:     '<span class="typ-badge typ-hotel">🏨 Hotel</span>',
+    flug:      '<span class="typ-badge typ-flug">✈️ Flug</span>',
+    mietwagen: '<span class="typ-badge typ-mietwagen">🚗 Mietwagen</span>'
+  };
+
+  function stornoBtn(id) {
+    const b = allBookings.find(x => x._id === id);
+    if (b && isBookingPast(b)) return '';
+    return `<button class="btn-delete" onclick="event.stopPropagation();stornieren('${id}')">Stornieren</button>`;
+  }
+
+  // ── RENDER: ALLE ─────────────────────────────────────────────
+  function renderAlle(bookings) {
+    const el = document.getElementById('alleTableBody');
+    if (!bookings.length) {
+      el.innerHTML = '<div class="empty-state">Keine Buchungen gefunden.</div>';
+      return;
+    }
+    el.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Typ</th><th>Bezeichnung</th><th>Details</th><th>Zeitraum</th><th>Preis</th><th>Gebucht am</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${bookings.map(b => {
+            const d = b.details;
+            let name = '', detail = '', price = '';
+            if (b.serviceTyp === 'hotel') {
+              name   = d.name;
+              detail = d.ort + ', ' + d.land;
+              price  = '€' + d.preisProNacht + ' / Nacht';
+            } else if (b.serviceTyp === 'flug') {
+              name   = d.abflugort + ' → ' + d.zielort;
+              detail = d.airline + ' · ' + d.flugnummer;
+              price  = '€' + d.preis + ' / Person';
+            } else {
+              name   = d.marke + ' ' + d.modell;
+              detail = d.ort;
+              price  = '€' + d.preisProTag + ' / Tag';
+            }
+            return `<tr onclick="showBookingDetail('${b._id}')" style="cursor:pointer">
+              <td>${TYP_BADGE[b.serviceTyp] || b.serviceTyp}</td>
+              <td>${name}</td>
+              <td class="td-muted">${detail}</td>
+              <td class="td-muted">${zeitraum(b)}</td>
+              <td>${price}</td>
+              <td class="td-muted">${fmtDate(b.createdAt)}</td>
+              <td>${stornoBtn(b._id)}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  // ── RENDER: HOTELS ───────────────────────────────────────────
+  function renderPakete(bookings) {
+    const el = document.getElementById('paketeTableBody');
+    if (!bookings.length) { el.innerHTML = '<div class="empty-state">Keine Paketbuchungen gefunden.</div>'; return; }
+
+    // Nach Paketnr. gruppieren (Reihenfolge der ersten Buchung je Paket beibehalten)
+    const groups = [];
+    const seen   = new Map();
+    bookings.forEach(b => {
+      const nr = b.details?.paketNr || '—';
+      if (!seen.has(nr)) { seen.set(nr, []); groups.push({ nr, items: seen.get(nr) }); }
+      seen.get(nr).push(b);
+    });
+
+    let rows = '';
+    groups.forEach(({ nr, items }) => {
+      items.forEach((b, i) => {
+        const d = b.details;
+        let name = '', detail = '', price = '';
+        if (b.serviceTyp === 'hotel') {
+          name   = d.name;
+          detail = d.ort + ', ' + d.land;
+          price  = '€' + d.preisProNacht + ' / Nacht';
+        } else if (b.serviceTyp === 'flug') {
+          name   = d.abflugort + ' → ' + d.zielort;
+          detail = d.airline + ' · ' + d.flugnummer;
+          price  = '€' + d.preis + ' / Person';
+        } else {
+          name   = d.marke + ' ' + d.modell;
+          detail = d.ort;
+          price  = '€' + d.preisProTag + ' / Tag';
+        }
+        // Paketnr.-Zelle nur in der ersten Zeile der Gruppe, mit rowspan
+        const nrCell = i === 0
+          ? `<td rowspan="${items.length}" class="paket-nr-cell"><span class="paket-nr-badge">${nr}</span></td>`
+          : '';
+        rows += `<tr class="${i === 0 ? 'paket-group-first' : 'paket-group-row'}" onclick="showBookingDetail('${b._id}')" style="cursor:pointer">
+          ${nrCell}
+          <td>${TYP_BADGE[b.serviceTyp] || b.serviceTyp}</td>
+          <td>${name}</td>
+          <td class="td-muted">${detail}</td>
+          <td class="td-muted">${zeitraum(b)}</td>
+          <td><span style="color:var(--brown);font-weight:500;">${d.paketRabatt}</span></td>
+          <td>${price}</td>
+          <td>${stornoBtn(b._id)}</td>
+        </tr>`;
+      });
+    });
+
+    el.innerHTML = `
+      <table>
+        <thead>
+          <tr><th>Paketnr.</th><th>Typ</th><th>Bezeichnung</th><th>Details</th><th>Zeitraum</th><th>Rabatt</th><th>Preis</th><th></th></tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  function renderHotels(bookings) {
+    const el = document.getElementById('hotelsTableBody');
+    if (!bookings.length) { el.innerHTML = '<div class="empty-state">Keine Hotels gefunden.</div>'; return; }
+    el.innerHTML = `
+      <table>
+        <thead>
+          <tr><th>Name</th><th>Ort</th><th>Land</th><th>Sterne</th><th>Preis / Nacht</th><th>Zeitraum</th><th></th></tr>
+        </thead>
+        <tbody>
+          ${bookings.map(b => {
+            const h = b.details;
+            return `<tr onclick="showBookingDetail('${b._id}')" style="cursor:pointer">
+              <td>${h.name}</td>
+              <td class="td-muted">${h.ort}</td>
+              <td class="td-muted">${h.land}</td>
+              <td style="color:var(--brown);">${h.sterne ? '★'.repeat(h.sterne) : '—'}</td>
+              <td>€${h.preisProNacht}</td>
+              <td class="td-muted">${zeitraum(b)}</td>
+              <td>${stornoBtn(b._id)}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  // ── RENDER: FLÜGE ────────────────────────────────────────────
+  function renderFluege(bookings) {
+    const el = document.getElementById('flightsTableBody');
+    if (!bookings.length) { el.innerHTML = '<div class="empty-state">Keine Flüge gefunden.</div>'; return; }
+    el.innerHTML = `
+      <table>
+        <thead>
+          <tr><th>Flugnummer</th><th>Airline</th><th>Route</th><th>Abflug</th><th>Preis / Person</th><th>Zeitraum</th><th></th></tr>
+        </thead>
+        <tbody>
+          ${bookings.map(b => {
+            const f = b.details;
+            return `<tr onclick="showBookingDetail('${b._id}')" style="cursor:pointer">
+              <td>${f.flugnummer}</td>
+              <td class="td-muted">${f.airline}</td>
+              <td>${f.abflugort} → ${f.zielort}</td>
+              <td class="td-muted">${fmtDt(f.abflugzeit)}</td>
+              <td>€${f.preis}</td>
+              <td class="td-muted">${zeitraum(b)}</td>
+              <td>${stornoBtn(b._id)}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  // ── RENDER: MIETWAGEN ────────────────────────────────────────
+  function renderMietwagen(bookings) {
+    const el = document.getElementById('rentalsTableBody');
+    if (!bookings.length) { el.innerHTML = '<div class="empty-state">Keine Mietwagen gefunden.</div>'; return; }
+    el.innerHTML = `
+      <table>
+        <thead>
+          <tr><th>Fahrzeug</th><th>Kategorie</th><th>Abholort</th><th>Preis / Tag</th><th>Zeitraum</th><th></th></tr>
+        </thead>
+        <tbody>
+          ${bookings.map(b => {
+            const c = b.details;
+            return `<tr onclick="showBookingDetail('${b._id}')" style="cursor:pointer">
+              <td>${c.marke} ${c.modell}</td>
+              <td class="td-muted">${c.kategorie || '—'}</td>
+              <td class="td-muted">${c.ort}</td>
+              <td>€${c.preisProTag}</td>
+              <td class="td-muted">${zeitraum(b)}</td>
+              <td>${stornoBtn(b._id)}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  // ── BOOKING DETAIL MODAL ─────────────────────────────────────
+  let selectedStar = 0;
+
+  function isBookingPast(b) {
+    const now = new Date();
+    if (b.bis)                      return new Date(b.bis) < now;
+    if (b.von)                      return new Date(b.von) < now;
+    if (b.details?.ankunftzeit)     return new Date(b.details.ankunftzeit) < now;
+    if (b.details?.abflugzeit)      return new Date(b.details.abflugzeit) < now;
+    return false;
+  }
+
+  function buildDetailHtml(b) {
+    const d = b.details;
+    const e = s => escHtml(String(s ?? ''));
+    if (b.serviceTyp === 'hotel') {
+      return `
+        <p class="bd-label">Hotel</p>
+        <p class="bd-title">${e(d.name)}</p>
+        ${d.beschreibung ? `<p class="bd-desc">${e(d.beschreibung)}</p>` : ''}
+        <div class="bd-row"><span class="bd-key">Ort</span><span class="bd-val">${e(d.ort)}, ${e(d.land)}</span></div>
+        <div class="bd-row"><span class="bd-key">Sterne</span><span class="bd-val" style="color:var(--brown)">${'★'.repeat(d.sterne||0)||'—'}</span></div>
+        <div class="bd-row"><span class="bd-key">Preis</span><span class="bd-val">€${d.preisProNacht} / Nacht</span></div>
+        <div class="bd-row"><span class="bd-key">Zeitraum</span><span class="bd-val">${zeitraum(b)}</span></div>
+        <div class="bd-row"><span class="bd-key">Gebucht am</span><span class="bd-val">${fmtDate(b.createdAt)}</span></div>`;
+    } else if (b.serviceTyp === 'flug') {
+      const abflug  = mergeDateTime(b.von, d.abflugzeit);
+      const ankunft = mergeDateTime(b.bis || b.von, d.ankunftzeit);
+      return `
+        <p class="bd-label">Flug</p>
+        <p class="bd-title">${e(d.abflugort)} → ${e(d.zielort)}</p>
+        <div class="bd-row"><span class="bd-key">Flugnummer</span><span class="bd-val">${e(d.flugnummer)}</span></div>
+        <div class="bd-row"><span class="bd-key">Airline</span><span class="bd-val">${e(d.airline)}</span></div>
+        <div class="bd-row"><span class="bd-key">Abflug</span><span class="bd-val">${fmtDt(abflug)}</span></div>
+        <div class="bd-row"><span class="bd-key">Ankunft</span><span class="bd-val">${fmtDt(ankunft)}</span></div>
+        <div class="bd-row"><span class="bd-key">Flugdauer</span><span class="bd-val">${flugdauer(d.abflugzeit, d.ankunftzeit)}</span></div>
+        <div class="bd-row"><span class="bd-key">Preis</span><span class="bd-val">€${d.preis} / Person</span></div>
+        <div class="bd-row"><span class="bd-key">Gebucht am</span><span class="bd-val">${fmtDate(b.createdAt)}</span></div>`;
+    } else {
+      return `
+        <p class="bd-label">Mietwagen</p>
+        <p class="bd-title">${e(d.marke)} ${e(d.modell)}</p>
+        <div class="bd-row"><span class="bd-key">Kategorie</span><span class="bd-val">${e(d.kategorie||'—')}</span></div>
+        <div class="bd-row"><span class="bd-key">Abholort</span><span class="bd-val">${e(d.ort)}</span></div>
+        <div class="bd-row"><span class="bd-key">Preis</span><span class="bd-val">€${d.preisProTag} / Tag</span></div>
+        <div class="bd-row"><span class="bd-key">Zeitraum</span><span class="bd-val">${zeitraum(b)}</span></div>
+        <div class="bd-row"><span class="bd-key">Gebucht am</span><span class="bd-val">${fmtDate(b.createdAt)}</span></div>`;
+    }
+  }
+
+  function ratingFormHtml(serviceTyp, serviceId, autor) {
+    return `
+      <div class="bd-divider"></div>
+      <p class="bd-label">Deine Bewertung</p>
+      <div class="bd-stars" id="bdStars">
+        ${[1,2,3,4,5].map(n => `<span class="bd-star" onclick="setStar(${n})">★</span>`).join('')}
+      </div>
+      <p id="bdStarError" class="bd-error" style="display:none">Bitte wähle eine Bewertung (1–5 Sterne).</p>
+      <textarea class="bd-textarea" id="bdKommentar" placeholder="Dein Kommentar …"></textarea>
+      <p id="bdKommentarError" class="bd-error" style="display:none">Bitte gib einen Kommentar ein.</p>
+      <div class="bd-row" style="border:none;padding:0.3rem 0 0.8rem;">
+        <span class="bd-key">Name / Autor</span>
+        <input class="bd-autor-input" id="bdAutor" value="${escHtml(autor)}" maxlength="60" />
+      </div>
+      <button class="btn-submit" style="width:100%;margin-top:0.75rem;" onclick="submitRating('${serviceTyp}','${serviceId}')">★ Bewertung abgeben</button>`;
+  }
+
+  function existingRatingHtml(r) {
+    return `
+      <div class="bd-divider"></div>
+      <p class="bd-label">Deine Bewertung</p>
+      <div class="bd-existing">
+        <div style="color:var(--brown);font-size:1.3rem;letter-spacing:0.05em">${'★'.repeat(r.bewertung)}${'☆'.repeat(5-r.bewertung)}</div>
+        ${r.kommentar ? `<p style="font-size:0.87rem;color:var(--dark);margin:0.5rem 0 0.25rem">${escHtml(r.kommentar)}</p>` : ''}
+        <p style="font-size:0.72rem;color:var(--text-muted)">— ${escHtml(r.autor)}</p>
+      </div>`;
+  }
+
+  function setStar(n) {
+    selectedStar = n;
+    document.querySelectorAll('.bd-star').forEach((s, i) => s.classList.toggle('active', i < n));
+    const err = document.getElementById('bdStarError');
+    if (err) err.style.display = 'none';
+  }
+
+  async function showBookingDetail(id) {
+    const b = allBookings.find(x => x._id === id);
+    if (!b) return;
+    selectedStar = 0;
+    document.getElementById('bookingDetailContent').innerHTML =
+      '<div style="padding:2rem 0;text-align:center;color:var(--text-muted)">Lädt …</div>';
+    document.getElementById('bookingDetailOverlay').classList.add('open');
+
+    const past = isBookingPast(b);
+    let extra = '';
+    if (past) {
+      try {
+        const res = await fetch(`${API}/ratings/${b.serviceTyp}/${b.serviceId}`);
+        if (res.ok) {
+          const ratings = await res.json();
+          const username = localStorage.getItem('username') || '';
+          const mine = ratings.find(r => r.autor === username);
+          extra = mine ? existingRatingHtml(mine) : ratingFormHtml(b.serviceTyp, b.serviceId, username);
+        }
+      } catch {}
+    }
+    document.getElementById('bookingDetailContent').innerHTML = buildDetailHtml(b) + extra;
+  }
+
+  function closeBookingDetail() {
+    document.getElementById('bookingDetailOverlay').classList.remove('open');
+  }
+
+  async function submitRating(serviceTyp, serviceId) {
+    const bewertung  = selectedStar;
+    const kommentar  = (document.getElementById('bdKommentar')?.value || '').trim();
+    const autor      = (document.getElementById('bdAutor')?.value || '').trim() ||
+                       (localStorage.getItem('username') || 'Anonym');
+
+    let ok = true;
+    if (!bewertung) {
+      document.getElementById('bdStarError').style.display = '';
+      ok = false;
+    }
+    if (!kommentar) {
+      document.getElementById('bdKommentarError').style.display = '';
+      ok = false;
+    }
+    if (!ok) return;
+
+    try {
+      const res = await fetch(`${API}/ratings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ serviceTyp, serviceId, bewertung, kommentar, autor })
+      });
+      if (res.ok) {
+        closeBookingDetail();
+        showNotif('success', 'Deine Bewertung wurde gespeichert.');
+      } else {
+        showNotif('error', 'Bewertung konnte nicht gespeichert werden.');
+      }
+    } catch {
+      showNotif('error', 'Server nicht erreichbar.');
+    }
+  }
+
+  init();
+
+  function openLogo() { document.getElementById('logoLightbox').classList.add('open'); }
+  function closeLogo() { document.getElementById('logoLightbox').classList.remove('open'); }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeLogo(); closeBookingDetail(); } });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="reisen.js"></script>
+
+<style>
+  nav { padding: 1.25rem 4rem; }
+  .nav-links-active { color: var(--dark) !important; font-weight: 500; }
+
+  /* ── Booking Detail Modal ── */
+  .booking-detail-overlay {
+    display: none; position: fixed; inset: 0; z-index: 600;
+    background: rgba(45,74,68,0.65);
+    align-items: center; justify-content: center;
+    cursor: pointer; padding: 1rem;
+  }
+  .booking-detail-overlay.open { display: flex; }
+  .booking-detail-box {
+    background: var(--warm-white); max-width: 520px; width: 100%;
+    padding: 2.5rem 2.75rem; position: relative; cursor: default;
+    max-height: 90vh; overflow-y: auto;
+    animation: bdIn 0.18s ease;
+  }
+  @keyframes bdIn { from { transform: translateY(14px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .bd-close {
+    position: absolute; top: 1rem; right: 1.25rem;
+    background: none; border: none; font-size: 1.5rem;
+    cursor: pointer; color: var(--dark); line-height: 1;
+  }
+  .bd-label {
+    font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--text-muted); margin: 0 0 0.25rem;
+  }
+  .bd-title {
+    font-family: 'Cormorant Garamond', serif; font-size: 1.6rem;
+    font-weight: 300; color: var(--dark); margin: 0 0 1.25rem;
+  }
+  .bd-desc { font-size: 0.83rem; color: var(--text-muted); margin: -0.75rem 0 1.25rem; line-height: 1.5; }
+  .bd-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 0.55rem 0; border-bottom: 1px solid var(--sand);
+  }
+  .bd-key { font-size: 0.68rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); }
+  .bd-val { font-size: 0.87rem; color: var(--dark); text-align: right; }
+  .bd-divider { height: 1px; background: var(--sand); margin: 1.5rem 0 1.25rem; }
+  .bd-stars { display: flex; gap: 0.3rem; margin-bottom: 0.5rem; }
+  .bd-star {
+    font-size: 2rem; cursor: pointer; color: var(--sand);
+    transition: color 0.15s, transform 0.1s; user-select: none;
+  }
+  .bd-star:hover, .bd-star.active { color: var(--brown); transform: scale(1.1); }
+  .bd-error { color: var(--danger); font-size: 0.75rem; margin: 0.25rem 0 0.5rem; }
+  .bd-textarea {
+    width: 100%; border: 1px solid var(--sand); padding: 0.75rem;
+    font-size: 0.85rem; font-family: 'Jost', sans-serif;
+    resize: vertical; min-height: 80px; color: var(--dark);
+    background: var(--cream); margin-top: 0.5rem;
+  }
+  .bd-autor-input {
+    border: 1px solid var(--sand); padding: 0.35rem 0.65rem;
+    font-size: 0.85rem; font-family: 'Jost', sans-serif;
+    color: var(--dark); background: var(--cream); width: 180px;
+  }
+  .bd-existing {
+    background: var(--cream); padding: 1rem 1.25rem;
+    border-left: 3px solid var(--taupe);
+  }
+
+  .typ-badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+    border-radius: 2px;
+  }
+  .typ-hotel     { background: rgba(139,107,84,0.12); color: var(--brown); }
+  .typ-flug      { background: rgba(60,100,160,0.1);  color: #2c5fa8; }
+  .typ-mietwagen { background: rgba(39,140,96,0.1);   color: #1a7a42; }
+
+  #alleSearch { width: 180px; }
+</style>
+</body>
+</html>

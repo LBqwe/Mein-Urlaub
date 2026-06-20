@@ -1,0 +1,1575 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Mein Urlaub</title>
+  <link rel="icon" type="image/png" href="../images/Logo.png" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+
+<!-- RATING PROMPT MODAL -->
+<div class="rating-prompt-overlay" id="ratingPromptOverlay">
+  <div class="rating-prompt-box">
+    <p class="section-label" style="margin:0 0 0.5rem">Dein Feedback</p>
+    <h3 class="rating-prompt-title">Wie war deine Reise?</h3>
+    <p class="rating-prompt-sub">Diese abgeschlossenen Buchungen warten noch auf deine Bewertung:</p>
+    <ul class="rating-prompt-list" id="ratingPromptList"></ul>
+    <div class="rating-prompt-actions">
+      <button class="rating-prompt-later" onclick="closeRatingPrompt()">Später</button>
+      <button class="btn-submit" style="flex:1;margin-top:0;" onclick="goRateNow()">Jetzt bewerten →</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOGO LIGHTBOX -->
+<div class="logo-lightbox" id="logoLightbox" onclick="if(event.target===this)closeLogo()">
+  <img src="../images/Logo.png" alt="Mein Urlaub" />
+</div>
+
+<!-- LOGIN SECTION -->
+<div class="login-section" id="loginSection" onclick="loginOverlayClick(event)">
+  <div class="login-box">
+    <button class="modal-close" id="loginCloseBtn" onclick="closeLoginSection()" style="display:none; position:absolute; top:1rem; right:1.25rem; color:var(--dark); font-size:1.5rem; background:none; border:none; cursor:pointer;">×</button>
+    <h2 id="authTitle">Willkommen</h2>
+    <p id="authSubtitle">Melden Sie sich an, um Ihre Reise zu planen.</p>
+    <div class="form-group">
+      <label id="labelUsername">Benutzername</label>
+      <input type="text" id="authUsername" placeholder="Benutzername" />
+    </div>
+    <div class="form-group">
+      <label id="labelPassword">Passwort</label>
+      <input type="password" id="authPassword" placeholder="Passwort" />
+    </div>
+
+    <!-- Nur im Registrieren-Modus sichtbar -->
+    <div id="registerFields" style="display:none;">
+      <div class="form-group">
+        <label>Passwort bestätigen *</label>
+        <input type="password" id="authPasswordConfirm" placeholder="Passwort wiederholen" />
+        <span id="passwordError" style="display:none; color:var(--danger); font-size:0.75rem; margin-top:0.3rem; display:none;">Passwörter stimmen nicht überein.</span>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>E-Mail *</label>
+          <input type="email" id="authEmail" placeholder="max@beispiel.de" />
+        </div>
+        <div class="form-group">
+          <label>PLZ &amp; Wohnort *</label>
+          <input type="text" id="authWohnort" placeholder="z. B. 74072 Heilbronn" oninput="debounceWohnort('authWohnort','authWohnortHint')" autocomplete="off" />
+          <span id="authWohnortHint" class="wohnort-hint"></span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Adresse</label>
+        <input type="text" id="authAdresse" placeholder="Musterstraße 1" />
+      </div>
+      <div class="form-group">
+        <label>Telefon</label>
+        <input type="tel" id="authTelefon" placeholder="+49 123 456789" />
+      </div>
+      <p style="font-size:0.72rem;color:var(--text-muted);margin-top:-0.5rem;">* Pflichtfelder</p>
+    </div>
+
+    <button class="btn-submit" onclick="handleAuth()">Anmelden</button>
+    <div class="toggle-auth">
+      <span id="toggleText">Noch kein Konto? </span>
+      <a onclick="toggleAuthMode()"><span id="toggleLink">Registrieren</span></a>
+    </div>
+    <div style="text-align:center; margin-top:1rem;">
+      <a href="../admin/index.html" style="font-size:0.75rem; color:var(--taupe); letter-spacing:0.1em;">
+        → Admin-Bereich
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="mainApp">
+
+  <!-- NAV -->
+  <nav>
+    <a href="#" class="nav-logo" onclick="event.preventDefault();openLogo()"><img src="../images/Logo.png" alt="Mein Urlaub" /></a>
+    <ul class="nav-links">
+      <li><a id="nav-hotels" class="nav-lnk active" onclick="navTo('hotels')">Hotels</a></li>
+      <li><a id="nav-fluege"    class="nav-lnk" onclick="navTo('fluege')">Flüge</a></li>
+      <li><a id="nav-mietwagen" class="nav-lnk" onclick="navTo('mietwagen')">Mietwagen</a></li>
+      <li><a id="nav-pakete"       class="nav-lnk" onclick="navTo('pakete')">Pakete</a></li>
+      <li><a id="nav-bewertungen" class="nav-lnk" onclick="navTo('bewertungen')">Bewertungen</a></li>
+    </ul>
+    <button class="btn-nav-login" id="navLoginBtn" onclick="openLoginSection()" style="display:none;">Anmelden</button>
+    <div class="nav-user-wrap" id="navUserWrap">
+      <div class="nav-avatar" id="navAvatar" onclick="toggleUserMenu()">U</div>
+      <div class="nav-dropdown" id="navDropdown">
+        <span class="nav-dropdown-name" id="navDropdownName">Benutzer</span>
+        <div class="nav-dropdown-divider"></div>
+        <a onclick="openProfile(); toggleUserMenu()">Mein Profil</a>
+        <a href="meine-reisen.html">Meine Reisen</a>
+        <div class="nav-dropdown-divider"></div>
+        <a onclick="logout()" class="nav-dropdown-logout">Abmelden</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero" id="entdecken">
+    <div class="hero-content">
+      <div class="hero-text">
+        <p class="hero-subtitle">Ihre Traumreise erwartet Sie</p>
+        <h1>Entdecken Sie<br/><em>die Welt</em></h1>
+        <p class="hero-desc">Einzigartige Hotels, Flugverbindungen und Mietwagen für Ihre perfekte Reise.</p>
+        <button class="hero-btn" onclick="document.getElementById('angebote').scrollIntoView({behavior:'smooth'})">
+          Jetzt entdecken
+        </button>
+      </div>
+    </div>
+    <div class="hero-image" aria-hidden="true"></div>
+  </section>
+
+  <!-- ANGEBOTE -->
+  <section id="angebote">
+    <p class="section-label">Unsere Angebote</p>
+    <h2 class="section-title">Alles für Ihre<br/><em>perfekte Reise</em></h2>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('hotels', this)">Hotels</button>
+      <button class="tab-btn" onclick="switchTab('fluege', this)">Flüge</button>
+      <button class="tab-btn" onclick="switchTab('mietwagen', this)">Mietwagen</button>
+      <button class="tab-btn" onclick="switchTab('pakete', this)">Pakete</button>
+      <button class="tab-btn" onclick="switchTab('bewertungen', this)">Bewertungen</button>
+    </div>
+
+    <!-- HOTELS -->
+    <div class="tab-content active" id="tab-hotels">
+      <div class="cards-grid" id="hotelGrid">
+        <div class="loading">Lädt Hotels</div>
+      </div>
+    </div>
+
+    <!-- FLÜGE -->
+    <div class="tab-content" id="tab-fluege">
+      <div class="cards-grid" id="flightGrid">
+        <div class="loading">Lädt Flüge</div>
+      </div>
+    </div>
+
+    <!-- MIETWAGEN -->
+    <div class="tab-content" id="tab-mietwagen">
+      <div class="cards-grid" id="rentalGrid">
+        <div class="loading">Lädt Mietwagen</div>
+      </div>
+    </div>
+
+    <!-- PAKETE -->
+    <div class="tab-content" id="tab-pakete">
+      <div class="paket-filter-bar">
+        <button class="paket-filter-btn active" onclick="setPaketFilter('alle', this)">Alle Pakete</button>
+        <button class="paket-filter-btn" onclick="setPaketFilter('mit', this)">Mit Mietwagen</button>
+        <button class="paket-filter-btn" onclick="setPaketFilter('ohne', this)">Ohne Mietwagen</button>
+      </div>
+      <div class="cards-grid" id="paketGrid">
+        <div class="loading">Lädt Pakete</div>
+      </div>
+    </div>
+
+    <!-- BEWERTUNGEN -->
+    <div class="tab-content" id="tab-bewertungen">
+      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; margin-bottom:2rem;">
+        <button class="btn-submit" style="width:auto; padding:0.75rem 2.5rem; margin-top:0;" onclick="openRatingModal()">+ Bewertung schreiben</button>
+        <div style="display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap;">
+          <input class="search-input" id="ratingSearch" placeholder="Suche …" oninput="filterRatings()" style="width:180px;" />
+          <select class="search-input" id="ratingTypFilter" onchange="filterRatings()" style="width:auto; cursor:pointer;">
+            <option value="">Alle Typen</option>
+            <option value="hotel">🏨 Hotels</option>
+            <option value="flug">✈️ Flüge</option>
+            <option value="mietwagen">🚗 Mietwagen</option>
+          </select>
+        </div>
+      </div>
+      <div class="cards-grid" id="ratingGrid">
+        <div class="loading">Lädt Bewertungen</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-logo" onclick="openLogo()" style="cursor:zoom-in"><img src="../images/Logo.png" alt="Mein Urlaub" /></div>
+    <p>© 2026 · DHBW Heilbronn · Verteilte Systeme</p>
+    <p style="font-size:0.75rem; margin-top:0.25rem; opacity:0.75;">Lara Buchholz · Shania Abdulla · Anna Harrer</p>
+  </footer>
+
+</div>
+
+<!-- CALENDAR MODAL -->
+<div class="modal-overlay" id="calendarModal" onclick="calOverlayClick(event)">
+  <div class="cal-box">
+    <div class="cal-header">
+      <button class="cal-nav" onclick="calNav(-1)">&#8249;</button>
+      <span class="cal-month-title" id="calMonthTitle"></span>
+      <button class="cal-nav" onclick="calNav(1)">&#8250;</button>
+    </div>
+    <div class="cal-weekdays">
+      <span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div class="cal-footer">
+      <p class="cal-hint" id="calHint">Bitte Startdatum auswählen</p>
+      <div class="cal-actions">
+        <button class="notif-btn-cancel" onclick="closeCalendar()">Abbrechen</button>
+        <button class="notif-btn-ok" id="calConfirmBtn" disabled onclick="confirmCalendar()">Buchen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIFICATION -->
+<div class="notif-overlay" id="notifOverlay">
+  <div class="notif-box">
+    <div class="notif-bar" id="notifBar"></div>
+    <div class="notif-content">
+      <p class="notif-title" id="notifTitle"></p>
+      <p class="notif-msg" id="notifMsg"></p>
+      <div class="notif-actions" id="notifActions">
+        <button class="notif-btn-ok" onclick="closeNotif()">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="detailModal" onclick="closeDetail(event)">
+  <div class="modal-box" style="max-width:560px; padding:0; overflow:hidden; max-height:90vh; display:flex; flex-direction:column;">
+    <div id="detailHero" style="height:180px; background:var(--sand); display:flex; align-items:center; justify-content:center; position:relative; flex-shrink:0;">
+      <span id="detailIcon" style="font-size:4rem;"></span>
+      <button class="modal-close" onclick="closeDetailBtn()" style="position:absolute;top:1rem;right:1.25rem; color:var(--dark);">×</button>
+    </div>
+    <div style="padding:2rem 2.5rem 2.5rem; overflow-y:auto; flex:1;">
+      <p class="card-tag" id="detailTag" style="margin-bottom:0.4rem;"></p>
+      <h3 id="detailTitle" style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;color:var(--dark);margin-bottom:1.5rem;line-height:1.15;"></h3>
+      <div id="detailRows"></div>
+      <button id="detailBuchBtn" class="btn-submit" style="margin-top:2rem;"></button>
+    </div>
+  </div>
+</div>
+
+<!-- RATING MODAL -->
+<div class="modal-overlay" id="ratingModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeRatingModal()">×</button>
+    <h3>Bewertung schreiben</h3>
+    <div class="form-group">
+      <label>Service Typ</label>
+      <select id="ratingServiceTyp" style="width:100%;padding:0.75rem 1rem;border:1px solid var(--sand);background:var(--cream);font-family:'Jost',sans-serif;font-size:0.9rem;outline:none;">
+        <option value="hotel">Hotel</option>
+        <option value="flug">Flug</option>
+        <option value="mietwagen">Mietwagen</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Service ID</label>
+      <input type="text" id="ratingServiceId" placeholder="ID des Hotels / Fluges / Mietwagens" />
+    </div>
+    <div class="form-group">
+      <label>Bewertung</label>
+      <div class="star-rating" id="starRating">
+        <span onclick="setRating(1)">★</span>
+        <span onclick="setRating(2)">★</span>
+        <span onclick="setRating(3)">★</span>
+        <span onclick="setRating(4)">★</span>
+        <span onclick="setRating(5)">★</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Kommentar</label>
+      <textarea id="ratingKommentar" placeholder="Teilen Sie Ihre Erfahrung..."></textarea>
+    </div>
+    <button class="btn-submit" onclick="submitRating()">Bewertung abschicken</button>
+  </div>
+</div>
+
+<!-- PROFIL MODAL -->
+<div class="modal-overlay" id="profileModal">
+  <div class="modal-box" style="max-width:560px;">
+    <button class="modal-close" onclick="closeProfile()">×</button>
+    <h3>Mein Profil</h3>
+
+    <!-- Ansicht -->
+    <div id="profileView">
+      <div class="profile-row"><span class="profile-label">Benutzername</span><span id="pvUsername">—</span></div>
+      <div class="profile-row"><span class="profile-label">E-Mail</span><span id="pvEmail">—</span></div>
+      <div class="profile-row"><span class="profile-label">Telefon</span><span id="pvTelefon">—</span></div>
+      <div class="profile-row"><span class="profile-label">Adresse</span><span id="pvAdresse">—</span></div>
+      <div class="profile-row"><span class="profile-label">Wohnort</span><span id="pvWohnort">—</span></div>
+      <button class="btn-submit" style="margin-top:1.5rem;" onclick="switchToEdit()">Bearbeiten</button>
+    </div>
+
+    <!-- Bearbeiten -->
+    <div id="profileEdit" style="display:none;">
+      <div class="form-group"><label>E-Mail *</label><input id="peEmail" type="email" /></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>PLZ &amp; Wohnort *</label>
+          <input id="peWohnort" type="text" oninput="debounceWohnort('peWohnort','peWohnortHint')" autocomplete="off" />
+          <span id="peWohnortHint" class="wohnort-hint"></span>
+        </div>
+        <div class="form-group"><label>Telefon</label><input id="peTelefon" type="tel" /></div>
+      </div>
+      <div class="form-group"><label>Adresse</label><input id="peAdresse" type="text" /></div>
+
+      <div style="border-top:1px solid var(--sand);margin:1.25rem 0 1rem;padding-top:1.25rem;">
+        <p style="font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:1rem;">Passwort ändern (optional)</p>
+        <div class="form-group"><label>Aktuelles Passwort</label><input id="peCurrentPw" type="password" placeholder="Aktuelles Passwort" /></div>
+        <div class="form-row">
+          <div class="form-group"><label>Neues Passwort</label><input id="peNewPw" type="password" placeholder="Neues Passwort" /></div>
+          <div class="form-group"><label>Bestätigen</label><input id="peNewPwConfirm" type="password" placeholder="Wiederholen" /></div>
+        </div>
+        <p id="pePasswordError" style="display:none;color:var(--danger);font-size:0.78rem;margin-top:-0.5rem;margin-bottom:0.75rem;">Passwörter stimmen nicht überein.</p>
+      </div>
+
+      <div style="display:flex;gap:1rem;margin-top:0.5rem;">
+        <button class="btn-submit" style="flex:1;" onclick="saveProfile()">Speichern</button>
+        <button class="btn-submit" style="flex:1;background:var(--taupe);" onclick="switchToView()">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API = window.location.origin;
+  let token = localStorage.getItem('token');
+  let authMode = 'login';
+  let selectedRating = 0;
+  let currentUser = null;
+
+  function showNotif(type, msg) {
+    const titles = { success: 'Erfolg', error: 'Fehler', info: 'Hinweis' };
+    document.getElementById('notifTitle').textContent = titles[type] || 'Hinweis';
+    document.getElementById('notifTitle').className = 'notif-title ' + type;
+    document.getElementById('notifMsg').textContent = msg;
+    document.getElementById('notifBar').className = 'notif-bar ' + type;
+    document.getElementById('notifActions').innerHTML =
+      '<button class="notif-btn-ok" onclick="closeNotif()">OK</button>';
+    document.getElementById('notifOverlay').classList.add('open');
+  }
+  function closeNotif() {
+    document.getElementById('notifOverlay').classList.remove('open');
+  }
+
+  function detailRow(label, value) {
+    return `<div class="profile-row">
+      <span class="profile-label">${label}</span>
+      <span style="font-size:0.9rem;color:var(--dark);text-align:right;">${value}</span>
+    </div>`;
+  }
+
+  function flugDisplayDate(dt) {
+    if (!dt) return new Date();
+    const d = new Date(dt);
+    if (d >= new Date()) return d;
+    const now = new Date();
+    d.setFullYear(now.getFullYear());
+    d.setMonth(now.getMonth());
+    d.setDate(now.getDate());
+    if (d < now) d.setDate(d.getDate() + 1);
+    return d;
+  }
+
+  function flugdauer(abflug, ankunft) {
+    if (!abflug || !ankunft) return '—';
+    const diff = new Date(ankunft) - new Date(abflug);
+    if (diff <= 0) return '—';
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    return h > 0 ? `${h}h ${m > 0 ? ' ' + m + 'min' : ''}`.trim() : `${m}min`;
+  }
+
+  function detailSection(icon, label) {
+    return `<div style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);
+      margin:1.25rem 0 0.5rem;padding-bottom:0.4rem;border-bottom:1px solid var(--sand);">${icon} ${label}</div>`;
+  }
+
+  function showPackageDetail(idx) {
+    if (!requireLogin()) return;
+    const pkg = packageList[idx];
+    if (!pkg) return;
+    const { flight: f, hotel: h, rental: c, discount, destination } = pkg;
+    const pct  = Math.round(discount * 100);
+    const orig = f.preis + h.preisProNacht * 3 + (c ? c.preisProTag * 3 : 0);
+    const disc = Math.round(orig * (1 - discount));
+
+    document.getElementById('detailIcon').textContent = '🌍';
+    document.getElementById('detailTag').textContent  = `${pct}% Rabatt · ${h.land}`;
+    document.getElementById('detailTitle').textContent = `Urlaub in ${destination}`;
+
+    let rows = '';
+
+    rows += detailSection('✈️', 'Flug');
+    rows += detailRow('Route',          f.abflugort + ' → ' + f.zielort);
+    rows += detailRow('Airline',        f.airline + ' · ' + f.flugnummer);
+    rows += detailRow('Abflug',         new Date(f.abflugzeit).toLocaleString('de-DE') + ' Uhr');
+    rows += detailRow('Ankunft',        new Date(f.ankunftzeit).toLocaleString('de-DE') + ' Uhr');
+    rows += detailRow('Flugdauer',      flugdauer(f.abflugzeit, f.ankunftzeit));
+    rows += detailRow('Preis / Person', '€' + f.preis + ' → <strong>€' + Math.round(f.preis * (1 - discount)) + '</strong>');
+
+    rows += detailSection('🏨', 'Hotel');
+    rows += detailRow('Hotel',          h.name);
+    rows += detailRow('Ort',            h.ort + ', ' + h.land);
+    rows += detailRow('Sterne',         h.sterne ? '★'.repeat(h.sterne) + ' (' + h.sterne + '/5)' : '—');
+    rows += detailRow('Preis / Nacht',  '€' + h.preisProNacht + ' → <strong>€' + Math.round(h.preisProNacht * (1 - discount)) + '</strong>');
+    if (h.beschreibung) rows += detailRow('Info', h.beschreibung);
+
+    if (c) {
+      rows += detailSection('🚗', 'Mietwagen');
+      rows += detailRow('Fahrzeug',       c.marke + ' ' + c.modell);
+      rows += detailRow('Kategorie',      c.kategorie || '—');
+      rows += detailRow('Abholort',       c.ort);
+      rows += detailRow('Verfügbarkeit',  c.verfuegbar ? '✔ Verfügbar' : '✖ Nicht verfügbar');
+      rows += detailRow('Preis / Tag',    '€' + c.preisProTag + ' → <strong>€' + Math.round(c.preisProTag * (1 - discount)) + '</strong>');
+    }
+
+    rows += `<div style="margin-top:1.25rem;padding:0.9rem 1rem;background:var(--cream);border:1px solid var(--sand);font-size:0.85rem;">
+      <span style="color:var(--text-muted);text-decoration:line-through;">€${orig} Einzeln (3-Nacht-Referenz)</span>
+      &nbsp;&nbsp;<strong style="color:var(--dark);font-size:1rem;">€${disc} im Paket</strong>
+      <span style="margin-left:0.5rem;font-size:0.72rem;color:var(--brown);">${pct}% gespart</span>
+    </div>`;
+
+    document.getElementById('detailRows').innerHTML = rows;
+
+    const btn = document.getElementById('detailBuchBtn');
+    btn.textContent = 'Paket buchen';
+    btn.onclick = () => { closeDetailBtn(); openPackageCalendar(idx); };
+
+    document.getElementById('detailModal').classList.add('open');
+  }
+
+  function showDetail(serviceTyp, id) {
+    if (!requireLogin()) return;
+    const d = serviceCache[id];
+    if (!d) return;
+    const modal = document.getElementById('detailModal');
+    const icons = { hotel: '🏨', flug: '✈️', mietwagen: '🚗' };
+    document.getElementById('detailIcon').textContent = icons[serviceTyp];
+
+    let tag = '', title = '', rows = '';
+    if (serviceTyp === 'hotel') {
+      tag   = d.land;
+      title = d.name;
+      rows  = detailRow('Ort', d.ort)
+            + detailRow('Sterne', d.sterne ? '★'.repeat(d.sterne) + ' (' + d.sterne + '/5)' : '—')
+            + detailRow('Preis pro Nacht', '€' + d.preisProNacht)
+            + (d.beschreibung ? detailRow('Beschreibung', d.beschreibung) : '');
+    } else if (serviceTyp === 'flug') {
+      tag   = d.airline;
+      title = d.abflugort + ' → ' + d.zielort;
+      rows  = detailRow('Flugnummer', d.flugnummer)
+            + detailRow('Abflug',       new Date(d.abflugzeit).toLocaleString('de-DE') + ' Uhr')
+            + detailRow('Ankunft',      new Date(d.ankunftzeit).toLocaleString('de-DE') + ' Uhr')
+            + detailRow('Flugdauer',    flugdauer(d.abflugzeit, d.ankunftzeit))
+            + detailRow('Preis pro Person', '€' + d.preis);
+    } else {
+      tag   = d.kategorie || 'Mietwagen';
+      title = d.marke + ' ' + d.modell;
+      rows  = detailRow('Abholort', d.ort)
+            + detailRow('Verfügbarkeit', d.verfuegbar ? 'Verfügbar' : 'Nicht verfügbar')
+            + detailRow('Preis pro Tag', '€' + d.preisProTag);
+    }
+
+    document.getElementById('detailTag').textContent   = tag;
+    document.getElementById('detailTitle').textContent = title;
+    document.getElementById('detailRows').innerHTML    = rows;
+
+    const btn = document.getElementById('detailBuchBtn');
+    btn.textContent = 'Termin finden';
+    btn.onclick = () => { closeDetailBtn(); openCalendar(serviceTyp, id); };
+
+    modal.classList.add('open');
+  }
+
+  function closeDetail(e) {
+    if (e.target === document.getElementById('detailModal')) closeDetailBtn();
+  }
+  function closeDetailBtn() {
+    document.getElementById('detailModal').classList.remove('open');
+  }
+
+  // ─── CALENDAR ───────────────────────────────────────────────
+  const cal = {
+    year: 0, month: 0,
+    start: null, end: null,
+    bookedRanges: [],
+    serviceTyp: null, serviceId: null,
+    packageData: null
+  };
+  const MONTHS = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+
+  async function openCalendar(serviceTyp, serviceId) {
+    if (!requireLogin()) return;
+    cal.serviceTyp = serviceTyp;
+    cal.serviceId  = serviceId;
+    cal.start = null; cal.end = null;
+    const now = new Date();
+    cal.year  = now.getFullYear();
+    cal.month = now.getMonth();
+    try {
+      const res = await fetch(`${API}/bookings/availability/${serviceTyp}/${serviceId}`);
+      cal.bookedRanges = res.ok ? await res.json() : [];
+    } catch { cal.bookedRanges = []; }
+    renderCal();
+    document.getElementById('calendarModal').classList.add('open');
+  }
+
+  function closeCalendar() { document.getElementById('calendarModal').classList.remove('open'); }
+  function calOverlayClick(e) { if (e.target === document.getElementById('calendarModal')) closeCalendar(); }
+
+  function calNav(dir) {
+    cal.month += dir;
+    if (cal.month > 11) { cal.month = 0; cal.year++; }
+    if (cal.month < 0)  { cal.month = 11; cal.year--; }
+    renderCal();
+  }
+
+  function dayBooked(date) {
+    const t = date.getTime();
+    return cal.bookedRanges.some(r => {
+      const v = new Date(r.von); v.setHours(0,0,0,0);
+      const b = new Date(r.bis); b.setHours(23,59,59,999);
+      return t >= v.getTime() && t <= b.getTime();
+    });
+  }
+
+  function rangeHasBookedDay(start, end) {
+    const cur = new Date(start);
+    while (cur <= end) {
+      if (dayBooked(new Date(cur))) return true;
+      cur.setDate(cur.getDate() + 1);
+    }
+    return false;
+  }
+
+  function renderCal() {
+    document.getElementById('calMonthTitle').textContent = MONTHS[cal.month] + ' ' + cal.year;
+    const today = new Date(); today.setHours(0,0,0,0);
+    const firstDay = new Date(cal.year, cal.month, 1);
+    const lastDay  = new Date(cal.year, cal.month + 1, 0);
+    const offset   = (firstDay.getDay() + 6) % 7; // Mon=0
+
+    let html = '';
+    for (let i = 0; i < offset; i++) html += '<div class="cal-day cal-empty"></div>';
+
+    for (let d = 1; d <= lastDay.getDate(); d++) {
+      const date = new Date(cal.year, cal.month, d);
+      const isPast   = date < today;
+      const isBooked = !isPast && dayBooked(date);
+      const isStart  = cal.start && date.toDateString() === cal.start.toDateString();
+      const isEnd    = cal.end   && date.toDateString() === cal.end.toDateString();
+      const inRange  = cal.start && cal.end && date > cal.start && date < cal.end;
+      const isToday  = date.toDateString() === today.toDateString();
+
+      let cls = 'cal-day';
+      if (isPast)          cls += ' cal-past';
+      else if (isBooked)   cls += ' cal-booked';
+      else if (isStart || isEnd) cls += ' cal-selected';
+      else if (inRange)    cls += ' cal-in-range';
+      if (isToday && !isPast && !isBooked) cls += ' cal-today';
+
+      const clickable = !isPast && !isBooked;
+      html += `<div class="${cls}"${clickable ? ` onclick="calClick(${cal.year},${cal.month},${d})"` : ''}>${d}</div>`;
+    }
+    document.getElementById('calGrid').innerHTML = html;
+    updateCalHint();
+  }
+
+  function calClick(y, m, d) {
+    const date = new Date(y, m, d);
+
+    if (cal.serviceTyp === 'flug') {
+      // Flüge: immer Einzeldatum
+      cal.start = date;
+      cal.end   = date;
+    } else if (!cal.start || cal.end) {
+      // Erster Klick: Startdatum setzen
+      cal.start = date;
+      cal.end   = null;
+    } else {
+      // Zweiter Klick: Enddatum setzen
+      const [a, b] = date < cal.start ? [date, cal.start] : [cal.start, date];
+
+      if ((cal.serviceTyp === 'hotel' || cal.serviceTyp === 'paket') && a.toDateString() === b.toDateString()) {
+        showNotif('info', 'Bitte mindestens 1 Übernachtung (2 verschiedene Tage) wählen.');
+        return;
+      }
+      if (rangeHasBookedDay(a, b)) {
+        showNotif('error', 'Der gewählte Zeitraum enthält bereits gebuchte Tage.');
+        cal.start = date; cal.end = null;
+      } else {
+        cal.start = a; cal.end = b;
+      }
+    }
+    renderCal();
+  }
+
+  function updateCalHint() {
+    const fmt = d => d.toLocaleDateString('de-DE');
+    const hint = document.getElementById('calHint');
+    const btn  = document.getElementById('calConfirmBtn');
+
+    if (cal.serviceTyp === 'flug') {
+      if (!cal.start) { hint.textContent = 'Bitte Reisedatum auswählen'; btn.disabled = true; }
+      else            { hint.textContent = 'Reisedatum: ' + fmt(cal.start); btn.disabled = false; }
+    } else if (cal.serviceTyp === 'mietwagen') {
+      if (!cal.start)    { hint.textContent = 'Bitte Abholdatum auswählen'; btn.disabled = true; }
+      else if (!cal.end) { hint.textContent = 'Abholung: ' + fmt(cal.start) + '  —  Rückgabedatum wählen oder direkt buchen'; btn.disabled = false; }
+      else               { hint.textContent = fmt(cal.start) + '  —  ' + fmt(cal.end); btn.disabled = false; }
+    } else if (cal.serviceTyp === 'paket') {
+      if (!cal.start)    { hint.textContent = 'Bitte Abreisedatum wählen (mind. 1 Übernachtung)'; btn.disabled = true; }
+      else if (!cal.end) { hint.textContent = 'Hinreise: ' + fmt(cal.start) + '  —  Bitte Rückreisedatum wählen'; btn.disabled = true; }
+      else               { hint.textContent = fmt(cal.start) + '  —  ' + fmt(cal.end) + '  · Paket wird komplett gebucht'; btn.disabled = false; }
+    } else {
+      // Hotel: Mindestens 2 verschiedene Tage erforderlich
+      if (!cal.start)    { hint.textContent = 'Bitte Anreisedatum auswählen'; btn.disabled = true; }
+      else if (!cal.end) { hint.textContent = 'Anreise: ' + fmt(cal.start) + '  —  Bitte Abreisedatum auswählen'; btn.disabled = true; }
+      else               { hint.textContent = fmt(cal.start) + '  —  ' + fmt(cal.end); btn.disabled = false; }
+    }
+  }
+
+  async function confirmCalendar() {
+    if (!cal.start) return;
+    if (!cal.end) cal.end = cal.start;
+    closeCalendar();
+
+    if (cal.serviceTyp === 'paket') {
+      await confirmPackage();
+      return;
+    }
+
+    if (cal.serviceTyp === 'mietwagen') {
+      showFuehrerscheinHinweis(function() {
+        const details = serviceCache[cal.serviceId];
+        if (!details) { showNotif('error', 'Daten nicht gefunden.'); return; }
+        fetch(`${API}/bookings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ serviceTyp: cal.serviceTyp, serviceId: cal.serviceId, details, von: cal.start, bis: cal.end })
+        }).then(res => {
+          if (res.status === 409) { showNotif('info', 'Dieser Zeitraum ist bereits vergeben. Bitte anderen Termin wählen.'); return; }
+          if (!res.ok)            { showNotif('error', 'Buchung fehlgeschlagen. Bitte versuchen Sie es erneut.'); return; }
+          showNotif('success', 'Ihre Buchung war erfolgreich!');
+        });
+      });
+      return;
+    }
+
+    const details = serviceCache[cal.serviceId];
+    if (!details) { showNotif('error', 'Daten nicht gefunden.'); return; }
+    const res = await fetch(`${API}/bookings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ serviceTyp: cal.serviceTyp, serviceId: cal.serviceId, details, von: cal.start, bis: cal.end })
+    });
+    if (res.status === 409) { showNotif('info', 'Dieser Zeitraum ist bereits vergeben. Bitte anderen Termin wählen.'); return; }
+    if (!res.ok)            { showNotif('error', 'Buchung fehlgeschlagen. Bitte versuchen Sie es erneut.'); return; }
+    showNotif('success', 'Ihre Buchung war erfolgreich!');
+  }
+
+  function showFuehrerscheinHinweis(onConfirm) {
+    document.getElementById('notifTitle').textContent = 'Wichtiger Hinweis';
+    document.getElementById('notifTitle').className   = 'notif-title info';
+    document.getElementById('notifMsg').innerHTML     =
+      'Bitte seien Sie sich darüber im Klaren, dass dieser Mietwagen nur mit einem gültigen Führerschein gebucht, abgeholt und verwendet werden darf.<br><br>' +
+      'Dies wird bei der Abholung des Wagens geprüft und sollte kein gültiger Führerschein vorhanden sein, so erlischt Ihre Buchung und wir haben das Recht vom Mietvertrag zurückzutreten.';
+    document.getElementById('notifBar').className     = 'notif-bar info';
+    document.getElementById('notifActions').innerHTML  =
+      '<button class="notif-btn-cancel" onclick="closeNotif()">Abbrechen</button>' +
+      '<button class="notif-btn-ok" id="fuehrerscheinBtn">Bestätigen</button>';
+    document.getElementById('notifOverlay').classList.add('open');
+    document.getElementById('fuehrerscheinBtn').onclick = function() {
+      closeNotif();
+      onConfirm();
+    };
+  }
+
+  function applyDiscount(details, discount, paketNr) {
+    const d = { ...details };
+    if ('preisProNacht' in d) d.preisProNacht = Math.round(d.preisProNacht * (1 - discount) * 100) / 100;
+    if ('preis'         in d) d.preis         = Math.round(d.preis         * (1 - discount) * 100) / 100;
+    if ('preisProTag'   in d) d.preisProTag   = Math.round(d.preisProTag   * (1 - discount) * 100) / 100;
+    d.paketRabatt = Math.round(discount * 100) + '%';
+    d.paketNr     = paketNr;
+    return d;
+  }
+
+  function genPaketNr() {
+    const ts  = Date.now().toString(36).toUpperCase().slice(-4);
+    const rnd = Math.random().toString(36).slice(2, 5).toUpperCase();
+    return 'PKT-' + ts + '-' + rnd;
+  }
+
+  async function confirmPackage() {
+    const pkg = cal.packageData;
+    if (!pkg) { showNotif('error', 'Paketdaten nicht gefunden.'); return; }
+    const disc    = pkg.discount;
+    const paketNr = genPaketNr();
+    const buchungen = [
+      { serviceTyp: 'flug',  serviceId: pkg.flight._id, details: applyDiscount(pkg.flight,  disc, paketNr) },
+      { serviceTyp: 'hotel', serviceId: pkg.hotel._id,  details: applyDiscount(pkg.hotel,   disc, paketNr) },
+      ...(pkg.rental ? [{ serviceTyp: 'mietwagen', serviceId: pkg.rental._id, details: applyDiscount(pkg.rental, disc, paketNr) }] : [])
+    ];
+    const createdIds = [];
+    let conflict = false;
+    for (const b of buchungen) {
+      const res = await fetch(`${API}/bookings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ ...b, von: cal.start, bis: cal.end })
+      });
+      if (res.status === 409) {
+        conflict = true;
+        break;
+      }
+      if (!res.ok) {
+        conflict = true;
+        break;
+      }
+      const created = await res.json();
+      createdIds.push(created._id);
+    }
+    if (conflict) {
+      await Promise.all(createdIds.map(id =>
+        fetch(`${API}/bookings/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ));
+      showNotif('info', 'Dieser Zeitraum ist für eine der Leistungen bereits vergeben. Bitte anderen Termin wählen.');
+      return;
+    }
+    showNotif('success', `Ihr Reisepaket nach ${pkg.destination} wurde erfolgreich gebucht! (${Math.round(disc * 100)}% Rabatt angewendet)`);
+  }
+  // ────────────────────────────────────────────────────────────
+
+  // AUTH CHECK — verifies token against server on every page load
+  function openLoginSection(asGuard = false) {
+    document.getElementById('loginCloseBtn').style.display = asGuard ? 'block' : 'none';
+    document.getElementById('loginSection').classList.add('visible');
+  }
+  function closeLoginSection() {
+    document.getElementById('loginSection').classList.remove('visible');
+  }
+  function loginOverlayClick(e) {
+    if (e.target === document.getElementById('loginSection')) closeLoginSection();
+  }
+
+  function requireLogin() {
+    if (currentUser) return true;
+    openLoginSection(true);
+    return false;
+  }
+
+  function showNavUser() {
+    document.getElementById('navLoginBtn').style.display  = 'none';
+    document.getElementById('navUserWrap').style.display  = '';
+    document.getElementById('navAvatar').textContent      = currentUser.username.charAt(0).toUpperCase();
+    document.getElementById('navDropdownName').textContent = 'Hallo ' + currentUser.username + '!';
+    localStorage.setItem('username', currentUser.username);
+  }
+  function showNavGuest() {
+    document.getElementById('navLoginBtn').style.display  = '';
+    document.getElementById('navUserWrap').style.display  = 'none';
+  }
+
+  // ── RATING PROMPT ────────────────────────────────────────────
+  function bookingPastCheck(b) {
+    const now = new Date();
+    if (b.bis)                    return new Date(b.bis) < now;
+    if (b.von)                    return new Date(b.von) < now;
+    if (b.details?.ankunftzeit)   return new Date(b.details.ankunftzeit) < now;
+    if (b.details?.abflugzeit)    return new Date(b.details.abflugzeit) < now;
+    return false;
+  }
+
+  function bookingLabel(b) {
+    const d = b.details;
+    if (b.serviceTyp === 'hotel')     return '🏨 ' + d.name + ' · ' + d.ort;
+    if (b.serviceTyp === 'flug')      return '✈️ ' + d.abflugort + ' → ' + d.zielort;
+    if (b.serviceTyp === 'mietwagen') return '🚗 ' + d.marke + ' ' + d.modell + ' · ' + d.ort;
+    return b.serviceTyp;
+  }
+
+  async function checkRatingPrompts() {
+    if (!currentUser || !token) return;
+    const promptKey = 'ratingPrompt:' + currentUser.username;
+    if (sessionStorage.getItem(promptKey)) return;
+
+    try {
+      const [bRes, rRes] = await Promise.all([
+        fetch(`${API}/bookings/me`,  { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${API}/ratings`)
+      ]);
+      if (!bRes.ok) return;
+      const bookings = await bRes.json();
+      const ratings  = rRes.ok ? await rRes.json() : [];
+
+      const username     = currentUser.username;
+      const ratedIds     = new Set(ratings.filter(r => r.autor === username).map(r => r.serviceId));
+      const isPaketB     = b => !!b.details?.paketRabatt;
+
+      const seen    = new Set();
+      const unrated = bookings.filter(b => {
+        if (!bookingPastCheck(b)) return false;
+        if (isPaketB(b))          return false;
+        if (ratedIds.has(b.serviceId))  return false;
+        if (seen.has(b.serviceId)) return false;
+        seen.add(b.serviceId);
+        return true;
+      });
+
+      if (!unrated.length) return;
+
+      unrated.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      sessionStorage.setItem(promptKey, '1');
+      showRatingPrompt(unrated.slice(0, 5));
+    } catch {}
+  }
+
+  function showRatingPrompt(unrated) {
+    const list = document.getElementById('ratingPromptList');
+    list.innerHTML = unrated.map(b => `<li class="rating-prompt-item">${bookingLabel(b)}</li>`).join('');
+    document.getElementById('ratingPromptOverlay').classList.add('open');
+  }
+
+  function closeRatingPrompt() {
+    document.getElementById('ratingPromptOverlay').classList.remove('open');
+  }
+
+  function goRateNow() {
+    closeRatingPrompt();
+    window.location.href = 'meine-reisen.html';
+  }
+
+  async function init() {
+    // Hauptapp immer zeigen, Daten ohne Login laden
+    document.getElementById('mainApp').style.display = 'block';
+    loadHotels();
+    loadFlights();
+    loadRentals();
+    loadRatings();
+    applyHashTab();
+
+    if (!token) { showNavGuest(); return; }
+
+    try {
+      const res = await fetch(`${API}/auth/me`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error();
+      currentUser = await res.json();
+      if (!currentUser._id) throw new Error();
+      showNavUser();
+      sortAndRerenderFlights();
+      checkRatingPrompts();
+    } catch {
+      token = null;
+      localStorage.removeItem('token');
+      currentUser = null;
+      showNavGuest();
+    }
+  }
+
+  // USER MENU
+  function toggleUserMenu() {
+    const dd = document.getElementById('navDropdown');
+    dd.classList.toggle('open');
+  }
+  document.addEventListener('click', e => {
+    const wrap = document.getElementById('navUserWrap');
+    if (wrap && !wrap.contains(e.target)) {
+      document.getElementById('navDropdown').classList.remove('open');
+    }
+  });
+
+  // ── WOHNORT-VALIDIERUNG ──────────────────────────────────────
+  const wohnortCache   = {};   // query → { ok, display }
+  let   wohnortTimers  = {};
+
+  async function validateWohnort(inputId, hintId) {
+    const input = document.getElementById(inputId);
+    const hint  = document.getElementById(hintId);
+    const val   = input.value.trim();
+
+    if (!val) { hint.textContent = ''; hint.className = 'wohnort-hint'; input.dataset.wohnortOk = ''; return; }
+
+    hint.textContent = '⏳ Prüfe …'; hint.className = 'wohnort-hint checking';
+
+    if (wohnortCache[val]) {
+      applyWohnortResult(input, hint, wohnortCache[val]);
+      return;
+    }
+
+    try {
+      const res  = await fetch(
+        'https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(val + ', Deutschland') + '&format=json&limit=1&addressdetails=1',
+        { headers: { 'Accept-Language': 'de' } }
+      );
+      const data = await res.json();
+      if (data.length) {
+        const a = data[0].address;
+        const parts = [a.city || a.town || a.village || a.municipality, a.state].filter(Boolean);
+        const display = parts.join(', ') || data[0].display_name.split(',').slice(0, 2).join(',').trim();
+        wohnortCache[val] = { ok: true, display, lat: +data[0].lat, lon: +data[0].lon };
+      } else {
+        wohnortCache[val] = { ok: false };
+      }
+    } catch {
+      wohnortCache[val] = { ok: false };
+    }
+    applyWohnortResult(input, hint, wohnortCache[val]);
+  }
+
+  function applyWohnortResult(input, hint, result) {
+    if (result.ok) {
+      hint.textContent = '✓ Gefunden: ' + result.display;
+      hint.className   = 'wohnort-hint ok';
+      input.dataset.wohnortOk = 'true';
+      sessionStorage.setItem('geo:' + input.value.trim().toLowerCase() + ', deutschland',
+        JSON.stringify({ lat: result.lat, lon: result.lon }));
+    } else {
+      hint.textContent = '✗ Ort nicht gefunden. Bitte PLZ + Stadt angeben, z. B. „74072 Heilbronn".';
+      hint.className   = 'wohnort-hint error';
+      input.dataset.wohnortOk = '';
+    }
+  }
+
+  function debounceWohnort(inputId, hintId) {
+    clearTimeout(wohnortTimers[inputId]);
+    document.getElementById(inputId).dataset.wohnortOk = '';
+    document.getElementById(hintId).textContent = '';
+    wohnortTimers[inputId] = setTimeout(() => validateWohnort(inputId, hintId), 600);
+  }
+
+  function toggleAuthMode() {
+    if (authMode === 'login') {
+      authMode = 'register';
+      document.getElementById('authTitle').textContent = 'Registrieren';
+      document.getElementById('authSubtitle').textContent = 'Erstellen Sie Ihr Konto.';
+      document.getElementById('toggleLink').textContent = 'Anmelden';
+      document.getElementById('toggleText').textContent = 'Bereits registriert? ';
+      document.querySelector('.btn-submit').textContent = 'Registrieren';
+      document.getElementById('registerFields').style.display = 'block';
+      document.getElementById('labelUsername').textContent = 'Benutzername *';
+      document.getElementById('labelPassword').textContent = 'Passwort *';
+    } else {
+      authMode = 'login';
+      document.getElementById('authTitle').textContent = 'Willkommen';
+      document.getElementById('authSubtitle').textContent = 'Melden Sie sich an, um Ihre Reise zu planen.';
+      document.getElementById('toggleLink').textContent = 'Registrieren';
+      document.getElementById('toggleText').textContent = 'Noch kein Konto? ';
+      document.querySelector('.btn-submit').textContent = 'Anmelden';
+      document.getElementById('registerFields').style.display = 'none';
+      document.getElementById('passwordError').style.display = 'none';
+      document.getElementById('labelUsername').textContent = 'Benutzername';
+      document.getElementById('labelPassword').textContent = 'Passwort';
+    }
+  }
+
+  async function handleAuth() {
+    const username = document.getElementById('authUsername').value;
+    const password = document.getElementById('authPassword').value;
+    if (!username || !password) return showNotif('error', 'Bitte alle Felder ausfüllen.');
+
+    if (authMode === 'register') {
+      const passwordConfirm = document.getElementById('authPasswordConfirm').value;
+      const errorEl = document.getElementById('passwordError');
+      const email   = document.getElementById('authEmail').value;
+      const wohnort = document.getElementById('authWohnort').value;
+      const telefon = document.getElementById('authTelefon').value;
+      const adresse = document.getElementById('authAdresse').value;
+
+      if (!email || !wohnort) {
+        return showNotif('error', 'Bitte alle Pflichtfelder ausfüllen (E-Mail und Wohnort).');
+      }
+      const wohnortInput = document.getElementById('authWohnort');
+      if (wohnortInput.dataset.wohnortOk !== 'true') {
+        await validateWohnort('authWohnort', 'authWohnortHint');
+        if (wohnortInput.dataset.wohnortOk !== 'true') {
+          return showNotif('error', 'Bitte gib einen gültigen Wohnort ein.');
+        }
+      }
+      if (password !== passwordConfirm) {
+        errorEl.style.display = 'block';
+        return;
+      }
+      errorEl.style.display = 'none';
+      const role = 'user';
+      const res = await fetch(`${API}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, role, email, telefon, adresse, wohnort })
+      });
+      if (res.ok) {
+        showNotif('success', 'Konto erstellt! Bitte anmelden.');
+        toggleAuthMode();
+      } else {
+        const d = await res.json();
+        showNotif('error', 'Fehler: ' + d.message);
+      }
+    } else {
+      const res = await fetch(`${API}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      if (res.ok) {
+        const d = await res.json();
+        token = d.token;
+        localStorage.setItem('token', token);
+        localStorage.setItem('username', d.username);
+        if (d.role === 'admin') {
+          localStorage.removeItem('token');
+          localStorage.removeItem('username');
+          window.location.href = '../admin/index.html';
+        } else {
+          // Vollständiges Profil (inkl. wohnort) laden
+          const meRes = await fetch(`${API}/auth/me`, { headers: { 'Authorization': `Bearer ${token}` } });
+          currentUser = meRes.ok ? await meRes.json() : { username: d.username, _id: true };
+          showNavUser();
+          closeLoginSection();
+          sortAndRerenderFlights();
+          checkRatingPrompts();
+        }
+      } else {
+        showNotif('error', 'Anmeldung fehlgeschlagen. Bitte prüfen Sie Ihre Daten.');
+      }
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('username');
+    token = null;
+    currentUser = null;
+    showNavGuest();
+  }
+
+  // PROFIL
+  function fillProfileFields(u) {
+    document.getElementById('pvUsername').textContent = u.username || '—';
+    document.getElementById('pvEmail').textContent    = u.email    || '—';
+    document.getElementById('pvTelefon').textContent  = u.telefon  || '—';
+    document.getElementById('pvAdresse').textContent  = u.adresse  || '—';
+    document.getElementById('pvWohnort').textContent  = u.wohnort  || '—';
+    document.getElementById('peEmail').value    = u.email    || '';
+    document.getElementById('peTelefon').value  = u.telefon  || '';
+    document.getElementById('peAdresse').value  = u.adresse  || '';
+    const peW = document.getElementById('peWohnort');
+    peW.value = u.wohnort || '';
+    peW.dataset.wohnortOk = u.wohnort ? 'true' : '';
+    document.getElementById('peWohnortHint').textContent = '';
+  }
+
+  async function openProfile() {
+    document.getElementById('profileModal').classList.add('open');
+    // Fill immediately from cache so there's no blank flash
+    if (currentUser) fillProfileFields(currentUser);
+    // Then refresh from server
+    try {
+      const res = await fetch(`${API}/auth/me`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        currentUser = await res.json();
+        fillProfileFields(currentUser);
+      }
+    } catch { /* keep cached data */ }
+    switchToView();
+  }
+  function closeProfile() {
+    document.getElementById('profileModal').classList.remove('open');
+  }
+  function switchToView() {
+    document.getElementById('profileView').style.display = 'block';
+    document.getElementById('profileEdit').style.display = 'none';
+  }
+  function switchToEdit() {
+    document.getElementById('profileView').style.display = 'none';
+    document.getElementById('profileEdit').style.display = 'block';
+    document.getElementById('peCurrentPw').value = '';
+    document.getElementById('peNewPw').value = '';
+    document.getElementById('peNewPwConfirm').value = '';
+    document.getElementById('pePasswordError').style.display = 'none';
+  }
+  async function saveProfile() {
+    const newPw        = document.getElementById('peNewPw').value;
+    const newPwConfirm = document.getElementById('peNewPwConfirm').value;
+    const errorEl      = document.getElementById('pePasswordError');
+
+    if (newPw && newPw !== newPwConfirm) {
+      errorEl.style.display = 'block';
+      return;
+    }
+    errorEl.style.display = 'none';
+
+    const peWohnortInput = document.getElementById('peWohnort');
+    if (peWohnortInput.dataset.wohnortOk !== 'true') {
+      await validateWohnort('peWohnort', 'peWohnortHint');
+      if (peWohnortInput.dataset.wohnortOk !== 'true') {
+        return showNotif('error', 'Bitte gib einen gültigen Wohnort ein.');
+      }
+    }
+
+    const body = {
+      email:   document.getElementById('peEmail').value,
+      telefon: document.getElementById('peTelefon').value,
+      adresse: document.getElementById('peAdresse').value,
+      wohnort: document.getElementById('peWohnort').value
+    };
+    if (newPw) {
+      body.currentPassword = document.getElementById('peCurrentPw').value;
+      body.newPassword     = newPw;
+    }
+
+    const res = await fetch(`${API}/auth/me`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify(body)
+    });
+    if (res.ok) {
+      currentUser = await res.json();
+      fillProfileFields(currentUser);
+      switchToView();
+    } else {
+      const d = await res.json();
+      showNotif('error', d.message || 'Fehler beim Speichern.');
+    }
+  }
+
+  // DATA LOADING
+  function cardCol(content) {
+    return `<div class="col-sm-6 col-lg-4">${content}</div>`;
+  }
+
+  const serviceCache = {};
+  const loadedData   = { hotels: null, flights: null, rentals: null };
+  let   packageList  = [];
+  let   rawFlights   = [];   // unveränderte Reihenfolge aus der DB
+
+  // ── GEO-HELPERS ──────────────────────────────────────────────
+  async function geocode(query) {
+    const key = 'geo:' + query.toLowerCase();
+    const cached = sessionStorage.getItem(key);
+    if (cached) return JSON.parse(cached);
+    try {
+      const res  = await fetch(
+        'https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(query) + '&format=json&limit=1',
+        { headers: { 'Accept-Language': 'de' } }
+      );
+      const data = await res.json();
+      if (!data.length) return null;
+      const coords = { lat: +data[0].lat, lon: +data[0].lon };
+      sessionStorage.setItem(key, JSON.stringify(coords));
+      return coords;
+    } catch { return null; }
+  }
+
+  function haversine(lat1, lon1, lat2, lon2) {
+    const R = 6371, d2r = Math.PI / 180;
+    const dLat = (lat2 - lat1) * d2r, dLon = (lon2 - lon1) * d2r;
+    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*d2r) * Math.cos(lat2*d2r) * Math.sin(dLon/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  async function sortFlightsByProximity(flights, wohnort) {
+    const userCoords = await geocode(wohnort + ', Deutschland');
+    if (!userCoords) return { sorted: flights, nearestAirport: null };
+
+    const abflugorte = [...new Set(flights.map(f => f.abflugort))];
+
+    // Sequenziell geocoden (Nominatim: 1 req/s)
+    const airportCoords = {};
+    for (const ort of abflugorte) {
+      const coords = await geocode(ort + ' Flughafen, Deutschland');
+      if (coords) airportCoords[ort] = coords;
+    }
+
+    const distMap = {};
+    for (const [ort, c] of Object.entries(airportCoords)) {
+      distMap[ort] = haversine(userCoords.lat, userCoords.lon, c.lat, c.lon);
+    }
+
+    const nearest = Object.entries(distMap).sort((a, b) => a[1] - b[1])[0];
+    const sorted  = [...flights].sort((a, b) =>
+      (distMap[a.abflugort] ?? Infinity) - (distMap[b.abflugort] ?? Infinity)
+    );
+    return { sorted, nearestAirport: nearest ? { ort: nearest[0], km: Math.round(nearest[1]) } : null };
+  }
+
+  function tryBuildPackages() {
+    if (!loadedData.hotels || !loadedData.flights || !loadedData.rentals) return;
+
+    const byCity = arr => arr.reduce((m, x) => {
+      const k = (x.ort || x.zielort || '').toLowerCase();
+      (m[k] = m[k] || []).push(x);
+      return m;
+    }, {});
+
+    const hotelsByCity  = byCity(loadedData.hotels);
+    const rentalsByCity = byCity(loadedData.rentals);
+
+    const seen = new Set();
+    packageList = [];
+
+    loadedData.flights.forEach(f => {
+      const city = f.zielort.toLowerCase();
+      if (seen.has(city)) return;
+      const hotels  = hotelsByCity[city];
+      if (!hotels?.length) return;
+      seen.add(city);
+      const rental   = rentalsByCity[city]?.[0] ?? null;
+      const discount = rental ? 0.15 : 0.10;
+      packageList.push({ destination: f.zielort, flight: f, hotel: hotels[0], rental, discount });
+    });
+
+    renderPackages();
+  }
+
+  async function openPackageCalendar(idx) {
+    if (!requireLogin()) return;
+    const pkg = packageList[idx];
+    if (!pkg) return;
+    cal.serviceTyp  = 'paket';
+    cal.serviceId   = null;
+    cal.packageData = pkg;
+    cal.start = null; cal.end = null;
+    const now = new Date();
+    cal.year  = now.getFullYear();
+    cal.month = now.getMonth();
+
+    const services = [
+      { typ: 'flug',  id: pkg.flight._id },
+      { typ: 'hotel', id: pkg.hotel._id },
+      ...(pkg.rental ? [{ typ: 'mietwagen', id: pkg.rental._id }] : [])
+    ];
+    try {
+      const allRanges = await Promise.all(services.map(s =>
+        fetch(`${API}/bookings/availability/${s.typ}/${s.id}`)
+          .then(r => r.ok ? r.json() : []).catch(() => [])
+      ));
+      cal.bookedRanges = allRanges.flat();
+    } catch { cal.bookedRanges = []; }
+
+    renderCal();
+    document.getElementById('calendarModal').classList.add('open');
+  }
+
+  let paketFilter = 'alle';
+
+  function setPaketFilter(filter, btn) {
+    paketFilter = filter;
+    document.querySelectorAll('.paket-filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderPackages();
+  }
+
+  function renderPackages() {
+    const grid = document.getElementById('paketGrid');
+    const list = packageList.filter(p =>
+      paketFilter === 'alle' ? true :
+      paketFilter === 'mit'  ? p.rental !== null :
+                               p.rental === null
+    );
+    if (!list.length) {
+      grid.innerHTML = '<p style="color:var(--text-muted);font-size:0.9rem;">Keine Reisepakete für diesen Filter.</p>';
+      return;
+    }
+    grid.innerHTML = '<div class="row g-4">' + list.map(pkg => {
+      const idx = packageList.indexOf(pkg);
+      const f = pkg.flight, h = pkg.hotel, c = pkg.rental;
+      const pct   = Math.round(pkg.discount * 100);
+      const orig  = f.preis + h.preisProNacht * 3 + (c ? c.preisProTag * 3 : 0);
+      const disc  = Math.round(orig * (1 - pkg.discount));
+      return cardCol(`
+        <div class="card h-100" onclick="showPackageDetail(${idx})" style="cursor:pointer;">
+          <div class="card-img-top d-flex align-items-center justify-content-center" style="height:200px;background:var(--sand);position:relative;">
+            <span style="font-size:3rem;">🌍</span>
+            <span class="paket-rabatt-badge">${pct}% Rabatt</span>
+          </div>
+          <div class="card-body">
+            <p class="card-tag">${h.land}</p>
+            <h5 class="card-title">Urlaub in ${pkg.destination}</h5>
+            <div class="paket-items">
+              <div class="paket-item">✈️ ${f.abflugort} → ${f.zielort} &nbsp;·&nbsp; ${f.airline}</div>
+              <div class="paket-item">🏨 ${h.name}${h.sterne ? ' &nbsp;·&nbsp; ' + '★'.repeat(h.sterne) : ''}</div>
+              ${c ? `<div class="paket-item">🚗 ${c.marke} ${c.modell} &nbsp;·&nbsp; ${c.kategorie || 'Mietwagen'}</div>` : ''}
+            </div>
+          </div>
+          <div class="card-footer d-flex justify-content-between align-items-center">
+            <div>
+              <div class="paket-orig">€${orig} <span style="font-size:0.7rem;">Einzeln</span></div>
+              <div class="card-price">€${disc} <span>/ Paket</span></div>
+            </div>
+            <button class="btn-outline" onclick="event.stopPropagation(); openPackageCalendar(${idx})">Paket buchen</button>
+          </div>
+        </div>`);
+    }).join('') + '</div>';
+  }
+
+  async function book(serviceTyp, serviceId) {
+    const details = serviceCache[serviceId];
+    if (!details) { showNotif('error', 'Daten nicht gefunden.'); return; }
+    const res = await fetch(`${API}/bookings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ serviceTyp, serviceId, details })
+    });
+    if (res.status === 409) { showNotif('info', 'Dieses Angebot haben Sie bereits gebucht.'); return; }
+    if (!res.ok) { showNotif('error', 'Buchung fehlgeschlagen. Bitte versuchen Sie es erneut.'); return; }
+    showNotif('success', 'Ihre Buchung war erfolgreich!');
+  }
+
+  async function loadHotels() {
+    const res = await fetch(`${API}/hotels`);
+    const hotels = await res.json();
+    const grid = document.getElementById('hotelGrid');
+    if (!hotels.length) { grid.innerHTML = '<p style="color:var(--text-muted);font-size:0.9rem;">Noch keine Hotels vorhanden.</p>'; return; }
+    hotels.forEach(h => { serviceCache[h._id] = h; });
+    loadedData.hotels = hotels; tryBuildPackages(); if (rawRatings.length) renderRatings();
+    grid.innerHTML = '<div class="row g-4">' + hotels.map(h => cardCol(`
+      <div class="card h-100" onclick="showDetail('hotel','${h._id}')" style="cursor:pointer;">
+        <div class="card-img-top d-flex align-items-center justify-content-center" id="hbild-${h._id}" style="height:200px;background:var(--sand);overflow:hidden;">
+          <span style="font-size:3rem;">🏨</span>
+        </div>
+        <div class="card-body">
+          <p class="card-tag">${h.land}</p>
+          <h5 class="card-title">${h.name}</h5>
+          <p class="card-text card-info">${h.ort} · ${h.sterne ? '★'.repeat(h.sterne) : ''}<br/>${h.beschreibung || ''}</p>
+        </div>
+        <div class="card-footer d-flex justify-content-between align-items-center">
+          <div class="card-price">€${h.preisProNacht} <span>/ Nacht</span></div>
+          <button class="btn-outline" onclick="event.stopPropagation(); openCalendar('hotel','${h._id}')">Termin finden</button>
+        </div>
+      </div>`)).join('') + '</div>';
+    if (typeof bildLaden === 'function') {
+      hotels.forEach(h => bildLaden(`${h.name} hotel`).then(url => bildEinsetzen(document.getElementById('hbild-' + h._id), url, '🏨')));
+    }
+  }
+
+  function sortFlightsByDisplay(flights) {
+    return [...flights].sort((a, b) => {
+      const da = flugDisplayDate(a.abflugzeit).getTime();
+      const db = flugDisplayDate(b.abflugzeit).getTime();
+      if (da !== db) return da - db;
+      const ta = new Date(a.abflugzeit);
+      const tb = new Date(b.abflugzeit);
+      return (ta.getHours() * 60 + ta.getMinutes()) - (tb.getHours() * 60 + tb.getMinutes());
+    });
+  }
+
+  function renderFlights(flights, nearestAirport) {
+    const grid = document.getElementById('flightGrid');
+    if (!nearestAirport) {
+      flights = sortFlightsByDisplay(flights);
+    }
+    let hint = '';
+    if (nearestAirport) {
+      hint = `<p style="font-size:0.75rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:1.25rem;">
+        📍 Sortiert nach deinem Wohnort — nächster Flughafen: <strong style="color:var(--dark)">${nearestAirport.ort}</strong> (ca. ${nearestAirport.km} km)
+      </p>`;
+    }
+    grid.innerHTML = hint + '<div class="row g-4">' + flights.map(f => cardCol(`
+      <div class="card h-100" onclick="showDetail('flug','${f._id}')" style="cursor:pointer;">
+        <div class="card-img-top d-flex align-items-center justify-content-center" id="fbild-${f._id}" style="height:200px;background:var(--sand);overflow:hidden;">
+          <span style="font-size:3rem;">✈️</span>
+        </div>
+        <div class="card-body">
+          <p class="card-tag">${f.airline}</p>
+          <h5 class="card-title">${f.abflugort} → ${f.zielort}</h5>
+          <p class="card-text card-info">Flug ${f.flugnummer}<br/>
+            ✈ ${flugDisplayDate(f.abflugzeit).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})} → ${flugDisplayDate(f.ankunftzeit).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})} Uhr
+            &nbsp;·&nbsp; ${flugdauer(f.abflugzeit, f.ankunftzeit)}<br/>
+            <span style="font-size:0.78rem;opacity:0.75">${flugDisplayDate(f.abflugzeit).toLocaleDateString('de-DE')}</span></p>
+        </div>
+        <div class="card-footer d-flex justify-content-between align-items-center">
+          <div class="card-price">€${f.preis} <span>/ Person</span></div>
+          <button class="btn-outline" onclick="event.stopPropagation(); openCalendar('flug','${f._id}')">Termin finden</button>
+        </div>
+      </div>`)).join('') + '</div>';
+    if (typeof bildLaden === 'function') {
+      flights.forEach(f => bildLaden(`${f.zielort} city travel`).then(url => bildEinsetzen(document.getElementById('fbild-' + f._id), url, '✈️')));
+    }
+  }
+
+  async function loadFlights() {
+    const res = await fetch(`${API}/flights`);
+    const flights = await res.json();
+    const grid = document.getElementById('flightGrid');
+    if (!flights.length) { grid.innerHTML = '<p style="color:var(--text-muted);font-size:0.9rem;">Noch keine Flüge vorhanden.</p>'; return; }
+    flights.forEach(f => { serviceCache[f._id] = f; });
+    rawFlights = flights;
+    loadedData.flights = flights; tryBuildPackages(); if (rawRatings.length) renderRatings();
+    renderFlights(flights);
+  }
+
+  async function sortAndRerenderFlights() {
+    if (!rawFlights.length || !currentUser?.wohnort) return;
+    const { sorted, nearestAirport } = await sortFlightsByProximity(rawFlights, currentUser.wohnort);
+    loadedData.flights = sorted; tryBuildPackages();
+    renderFlights(sorted, nearestAirport);
+  }
+
+  async function loadRentals() {
+    const res = await fetch(`${API}/rentals`);
+    const cars = await res.json();
+    const grid = document.getElementById('rentalGrid');
+    if (!cars.length) { grid.innerHTML = '<p style="color:var(--text-muted);font-size:0.9rem;">Noch keine Mietwagen vorhanden.</p>'; return; }
+    cars.forEach(c => { serviceCache[c._id] = c; });
+    loadedData.rentals = cars; tryBuildPackages(); if (rawRatings.length) renderRatings();
+    grid.innerHTML = '<div class="row g-4">' + cars.map(c => cardCol(`
+      <div class="card h-100" onclick="showDetail('mietwagen','${c._id}')" style="cursor:pointer;">
+        <div class="card-img-top d-flex align-items-center justify-content-center" id="abild-${c._id}" style="height:200px;background:var(--sand);overflow:hidden;">
+          <span style="font-size:3rem;">🚗</span>
+        </div>
+        <div class="card-body">
+          <p class="card-tag">${c.kategorie || 'Mietwagen'}</p>
+          <h5 class="card-title">${c.marke} ${c.modell}</h5>
+          <p class="card-text card-info">${c.ort}<br/><span class="badge" style="background:${c.verfuegbar ? 'var(--taupe)' : 'var(--text-muted)'};color:#fff;">${c.verfuegbar ? 'Verfügbar' : 'Nicht verfügbar'}</span></p>
+        </div>
+        <div class="card-footer d-flex justify-content-between align-items-center">
+          <div class="card-price">€${c.preisProTag} <span>/ Tag</span></div>
+          <button class="btn-outline" onclick="event.stopPropagation(); openCalendar('mietwagen','${c._id}')">Termin finden</button>
+        </div>
+      </div>`)).join('') + '</div>';
+    if (typeof bildLaden === 'function') {
+      cars.forEach(c => bildLaden(`${c.marke||''} ${c.modell||''} car exterior`).then(url => bildEinsetzen(document.getElementById('abild-' + c._id), url, '🚗')));
+    }
+  }
+
+  let rawRatings = [];
+
+  function getServiceLabel(serviceTyp, serviceId) {
+    const s = serviceCache[serviceId];
+    if (!s) return null;
+    if (serviceTyp === 'hotel')     return s.name + ' · ' + s.ort;
+    if (serviceTyp === 'flug')      return s.abflugort + ' → ' + s.zielort + ' (' + s.airline + ')';
+    if (serviceTyp === 'mietwagen') return s.marke + ' ' + s.modell + ' · ' + s.ort;
+    if (serviceTyp === 'paket')     return 'Reisepaket nach ' + (s.zielort || s.ort || s.name);
+    return null;
+  }
+
+  const TYP_ICON = { hotel: '🏨', flug: '✈️', mietwagen: '🚗', paket: '🌍' };
+
+  function renderRatings(list) {
+    const grid = document.getElementById('ratingGrid');
+    const ratings = list ?? rawRatings;
+    if (!ratings.length) { grid.innerHTML = '<p style="color:var(--text-muted);font-size:0.9rem;">Keine Bewertungen gefunden.</p>'; return; }
+    grid.innerHTML = '<div class="row g-4">' + ratings.map(r => {
+      const label = getServiceLabel(r.serviceTyp, r.serviceId);
+      const tag   = (TYP_ICON[r.serviceTyp] || '') + ' ' + (label || r.serviceTyp);
+      return cardCol(`
+        <div class="card h-100">
+          <div class="card-body">
+            <p class="card-tag">${tag}</p>
+            <div class="stars mb-2">${'★'.repeat(r.bewertung)}${'☆'.repeat(5 - r.bewertung)}</div>
+            <p class="card-text card-info">${r.kommentar || ''}</p>
+          </div>
+          <div class="card-footer d-flex justify-content-between align-items-center">
+            <div style="font-size:0.8rem;color:var(--text-muted);">von ${r.autor}</div>
+            <div style="font-size:0.75rem;color:var(--taupe);">${new Date(r.createdAt).toLocaleDateString('de-DE')}</div>
+          </div>
+        </div>`);
+    }).join('') + '</div>';
+  }
+
+  function filterRatings() {
+    const term = (document.getElementById('ratingSearch')?.value || '').toLowerCase();
+    const typ  = document.getElementById('ratingTypFilter')?.value || '';
+    let list = rawRatings;
+    if (typ)  list = list.filter(r => r.serviceTyp === typ);
+    if (term) list = list.filter(r => {
+      const label = getServiceLabel(r.serviceTyp, r.serviceId) || '';
+      return label.toLowerCase().includes(term)
+          || (r.kommentar || '').toLowerCase().includes(term)
+          || (r.autor || '').toLowerCase().includes(term);
+    });
+    renderRatings(list);
+  }
+
+  async function loadRatings() {
+    const res = await fetch(`${API}/ratings`);
+    rawRatings = await res.json();
+    renderRatings();
+  }
+
+  // NAV
+  function applyHashTab() {
+    const hash = window.location.hash.replace('#', '');
+    const tabs = ['hotels', 'fluege', 'mietwagen', 'pakete', 'bewertungen'];
+    if (tabs.includes(hash)) navTo(hash);
+  }
+
+  function navTo(section) {
+    document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+    const navEl = document.getElementById('nav-' + section);
+    if (navEl) navEl.classList.add('active');
+    document.getElementById('angebote').scrollIntoView({ behavior: 'smooth' });
+    const tabMap = { hotels: 'hotels', fluege: 'fluege', mietwagen: 'mietwagen', pakete: 'pakete', bewertungen: 'bewertungen' };
+    const tabBtn = [...document.querySelectorAll('.tab-btn')]
+      .find(b => b.getAttribute('onclick').includes(`'${tabMap[section]}'`));
+    if (tabBtn) switchTab(section, tabBtn);
+  }
+
+  // TABS
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + name).classList.add('active');
+
+    // Navbar-Markierung synchronisieren
+    const navMap = { hotels: 'hotels', fluege: 'fluege', mietwagen: 'mietwagen', pakete: 'pakete', bewertungen: 'bewertungen' };
+    document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+    const navId = 'nav-' + (navMap[name] ?? name);
+    const navEl = document.getElementById(navId);
+    if (navEl) navEl.classList.add('active');
+  }
+
+  // RATING MODAL
+  function openRatingModal() { document.getElementById('ratingModal').classList.add('open'); }
+  function closeRatingModal() { document.getElementById('ratingModal').classList.remove('open'); }
+  function setRating(val) {
+    selectedRating = val;
+    document.querySelectorAll('#starRating span').forEach((s, i) => {
+      s.classList.toggle('active', i < val);
+    });
+  }
+
+  async function submitRating() {
+    const serviceTyp = document.getElementById('ratingServiceTyp').value;
+    const serviceId = document.getElementById('ratingServiceId').value;
+    const kommentar = document.getElementById('ratingKommentar').value;
+    const autor = 'User';
+    if (!serviceId || !selectedRating) return showNotif('error', 'Bitte Service ID und Bewertung angeben.');
+    const res = await fetch(`${API}/ratings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ serviceTyp, serviceId, bewertung: selectedRating, kommentar, autor })
+    });
+    if (res.ok) {
+      closeRatingModal();
+      loadRatings();
+      showNotif('success', 'Ihre Bewertung wurde gespeichert!');
+    } else {
+      showNotif('error', 'Fehler beim Speichern der Bewertung.');
+    }
+  }
+
+  init();
+
+  function openLogo() { document.getElementById('logoLightbox').classList.add('open'); }
+  function closeLogo() { document.getElementById('logoLightbox').classList.remove('open'); }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLogo(); });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="booking.js"></script>
+</body>
+</html>

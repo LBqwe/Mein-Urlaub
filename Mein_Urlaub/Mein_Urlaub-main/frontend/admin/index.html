@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mein Urlaub – Admin</title>
+  <link rel="icon" type="image/png" href="../images/Logo.png" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <h2>Admin Panel</h2>
+    <span class="admin-badge">Mein Urlaub</span>
+    <div class="form-group">
+      <label>Benutzername</label>
+      <input type="text" id="loginUser" placeholder="Benutzername" autocomplete="off" />
+    </div>
+    <div class="form-group">
+      <label>Passwort</label>
+      <input type="password" id="loginPass" placeholder="Passwort" autocomplete="off" onkeydown="if(event.key==='Enter')doLogin()" />
+    </div>
+    <button class="btn-submit" onclick="doLogin()">Anmelden</button>
+    <div style="text-align:center; margin-top:1rem;">
+      <a href="../user/index.html" style="font-size:0.75rem; color:var(--taupe); letter-spacing:0.1em;">
+        ← User-Bereich
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- LOGO LIGHTBOX -->
+<div class="logo-lightbox" id="logoLightbox" onclick="if(event.target===this)closeLogo()">
+  <img src="../images/Logo.png" alt="Mein Urlaub" />
+</div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo" onclick="openLogo()" style="cursor:zoom-in"><img src="../images/Logo.png" alt="Mein Urlaub" /></div>
+  <div class="sidebar-subtitle">Admin Panel</div>
+  <div class="sidebar-divider"></div>
+  <p class="sidebar-label">Verwaltung</p>
+  <ul class="sidebar-nav">
+    <li><a href="#" class="active" onclick="switchSection('hotels', this)"><span class="icon">🏨</span> Hotels</a></li>
+    <li><a href="#" onclick="switchSection('fluege', this)"><span class="icon">✈️</span> Flüge</a></li>
+    <li><a href="#" onclick="switchSection('mietwagen', this)"><span class="icon">🚗</span> Mietwagen</a></li>
+    <li><a href="#" onclick="switchSection('bewertungen', this)"><span class="icon">⭐</span> Bewertungen</a></li>
+  </ul>
+  <div class="sidebar-footer">
+    <a href="../user/index.html" style="display:block; font-size:0.72rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--taupe); text-decoration:none; margin-bottom:0.75rem; transition:color 0.3s;">
+      ← User-Bereich
+    </a>
+    <button class="logout-btn" onclick="logout()">Abmelden</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- HOTELS -->
+  <div id="section-hotels" class="section-content">
+    <div class="topbar">
+      <div>
+        <p class="page-label">Verwaltung</p>
+        <h1 class="page-title"><em>Hotels</em></h1>
+      </div>
+      <button class="add-btn" onclick="openModal('hotel')">+ Hotel hinzufügen</button>
+    </div>
+    <div class="stats" id="hotelStats">
+      <div class="stat-card"><p class="stat-label">Gesamt</p><p class="stat-value" id="hotelCount">—</p></div>
+    </div>
+    <div class="table-container">
+      <div class="table-header">
+        <span class="table-title">Alle Hotels</span>
+        <input type="text" class="search-input" placeholder="Suchen..." oninput="filterTable('hotelTable', this.value)" />
+      </div>
+      <table id="hotelTable" class="table table-hover mb-0">
+        <thead><tr><th>Name</th><th>Ort</th><th>Land</th><th>Sterne</th><th>Preis/Nacht</th><th>Aktionen</th></tr></thead>
+        <tbody id="hotelBody"><tr><td colspan="6" class="empty-state">Lädt...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- FLÜGE -->
+  <div id="section-fluege" class="section-content" style="display:none">
+    <div class="topbar">
+      <div>
+        <p class="page-label">Verwaltung</p>
+        <h1 class="page-title"><em>Flüge</em></h1>
+      </div>
+      <button class="add-btn" onclick="openModal('flight')">+ Flug hinzufügen</button>
+    </div>
+    <div class="stats">
+      <div class="stat-card"><p class="stat-label">Gesamt</p><p class="stat-value" id="flightCount">—</p></div>
+    </div>
+    <div class="table-container">
+      <div class="table-header">
+        <span class="table-title">Alle Flüge</span>
+        <input type="text" class="search-input" placeholder="Suchen..." oninput="filterTable('flightTable', this.value)" />
+      </div>
+      <table id="flightTable" class="table table-hover mb-0">
+        <thead><tr><th>Flugnummer</th><th>Von</th><th>Nach</th><th>Airline</th><th>Abflug</th><th>Preis</th><th>Aktionen</th></tr></thead>
+        <tbody id="flightBody"><tr><td colspan="7" class="empty-state">Lädt...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MIETWAGEN -->
+  <div id="section-mietwagen" class="section-content" style="display:none">
+    <div class="topbar">
+      <div>
+        <p class="page-label">Verwaltung</p>
+        <h1 class="page-title"><em>Mietwagen</em></h1>
+      </div>
+      <button class="add-btn" onclick="openModal('rental')">+ Mietwagen hinzufügen</button>
+    </div>
+    <div class="stats">
+      <div class="stat-card"><p class="stat-label">Gesamt</p><p class="stat-value" id="rentalCount">—</p></div>
+    </div>
+    <div class="table-container">
+      <div class="table-header">
+        <span class="table-title">Alle Mietwagen</span>
+        <input type="text" class="search-input" placeholder="Suchen..." oninput="filterTable('rentalTable', this.value)" />
+      </div>
+      <table id="rentalTable" class="table table-hover mb-0">
+        <thead><tr><th>Marke</th><th>Modell</th><th>Ort</th><th>Kategorie</th><th>Preis/Tag</th><th>Status</th><th>Aktionen</th></tr></thead>
+        <tbody id="rentalBody"><tr><td colspan="7" class="empty-state">Lädt...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- BEWERTUNGEN -->
+  <div id="section-bewertungen" class="section-content" style="display:none">
+    <div class="topbar">
+      <div>
+        <p class="page-label">Verwaltung</p>
+        <h1 class="page-title"><em>Bewertungen</em></h1>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat-card"><p class="stat-label">Gesamt</p><p class="stat-value" id="ratingCount">—</p></div>
+    </div>
+    <div class="table-container">
+      <div class="table-header">
+        <span class="table-title">Alle Bewertungen</span>
+      </div>
+      <table id="ratingTable" class="table table-hover mb-0">
+        <thead><tr><th>Typ</th><th>Bewertung</th><th>Kommentar</th><th>Autor</th><th>Datum</th><th>Aktionen</th></tr></thead>
+        <tbody id="ratingBody"><tr><td colspan="6" class="empty-state">Lädt...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<!-- HOTEL MODAL -->
+<div class="modal-overlay" id="hotelModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('hotelModal')">×</button>
+    <h3 id="hotelModalTitle">Hotel hinzufügen</h3>
+    <input type="hidden" id="hotelId" />
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Name</label><input class="form-control" id="hotelName" placeholder="Hotelname" /></div>
+      <div class="form-group"><label class="form-label">Ort</label><input class="form-control" id="hotelOrt" placeholder="Stadt" /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Land</label><input class="form-control" id="hotelLand" placeholder="Deutschland" /></div>
+      <div class="form-group"><label class="form-label">Sterne</label>
+        <select class="form-select" id="hotelSterne">
+          <option value="1">★</option><option value="2">★★</option>
+          <option value="3">★★★</option><option value="4">★★★★</option>
+          <option value="5">★★★★★</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Preis pro Nacht (€)</label><input class="form-control" type="number" id="hotelPreis" placeholder="120" /></div>
+    <div class="form-group"><label class="form-label">Beschreibung</label><textarea class="form-control" id="hotelBeschreibung" placeholder="Beschreibung des Hotels..."></textarea></div>
+    <button class="btn-submit" onclick="saveHotel()">Speichern</button>
+  </div>
+</div>
+
+<!-- FLIGHT MODAL -->
+<div class="modal-overlay" id="flightModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('flightModal')">×</button>
+    <h3 id="flightModalTitle">Flug hinzufügen</h3>
+    <input type="hidden" id="flightId" />
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Flugnummer</label><input class="form-control" id="flightNummer" placeholder="LH1234" /></div>
+      <div class="form-group"><label class="form-label">Airline</label><input class="form-control" id="flightAirline" placeholder="Lufthansa" /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Abflugort</label><input class="form-control" id="flightAbflug" placeholder="Frankfurt" /></div>
+      <div class="form-group"><label class="form-label">Zielort</label><input class="form-control" id="flightZiel" placeholder="Barcelona" /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Abflugzeit</label><input class="form-control" type="datetime-local" id="flightAbflugzeit" /></div>
+      <div class="form-group"><label class="form-label">Ankunftzeit</label><input class="form-control" type="datetime-local" id="flightAnkunft" /></div>
+    </div>
+    <div class="form-group"><label class="form-label">Preis (€)</label><input class="form-control" type="number" id="flightPreis" placeholder="199" /></div>
+    <button class="btn-submit" onclick="saveFlight()">Speichern</button>
+  </div>
+</div>
+
+<!-- RENTAL MODAL -->
+<div class="modal-overlay" id="rentalModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('rentalModal')">×</button>
+    <h3 id="rentalModalTitle">Mietwagen hinzufügen</h3>
+    <input type="hidden" id="rentalId" />
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Marke</label><input class="form-control" id="rentalMarke" placeholder="BMW" /></div>
+      <div class="form-group"><label class="form-label">Modell</label><input class="form-control" id="rentalModell" placeholder="3er" /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Ort</label><input class="form-control" id="rentalOrt" placeholder="München" /></div>
+      <div class="form-group"><label class="form-label">Kategorie</label>
+        <select class="form-select" id="rentalKategorie">
+          <option>Klein</option><option>Mittel</option>
+          <option>Gross</option><option>SUV</option><option>Luxus</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Preis pro Tag (€)</label><input class="form-control" type="number" id="rentalPreis" placeholder="59" /></div>
+      <div class="form-group"><label class="form-label">Verfügbar</label>
+        <select class="form-select" id="rentalVerfuegbar">
+          <option value="true">Ja</option>
+          <option value="false">Nein</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-submit" onclick="saveRental()">Speichern</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+  const API = window.location.origin;
+  let token = localStorage.getItem('adminToken');
+
+  function init() {
+    if (!token) {
+      document.getElementById('loginOverlay').style.display = 'flex';
+    } else {
+      document.getElementById('loginOverlay').style.display = 'none';
+      loadHotels(); loadFlights(); loadRentals(); loadRatings();
+    }
+  }
+
+  async function doLogin() {
+    const username = document.getElementById('loginUser').value;
+    const password = document.getElementById('loginPass').value;
+    if (!username || !password) return;
+    const res = await fetch(`${API}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    if (res.ok) {
+      const d = await res.json();
+      if (d.role !== 'admin') { showToast('Kein Admin-Zugang! Bitte mit einem Admin-Konto anmelden.'); return; }
+      token = d.token;
+      localStorage.setItem('adminToken', token);
+      init();
+    } else {
+      showToast('Anmeldung fehlgeschlagen. Bitte Benutzername und Passwort prüfen.');
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('token');
+    localStorage.removeItem('username');
+    token = null;
+    init();
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  function switchSection(name, el) {
+    event.preventDefault();
+    document.querySelectorAll('.section-content').forEach(s => s.style.display = 'none');
+    document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
+    document.getElementById('section-' + name).style.display = 'block';
+    el.classList.add('active');
+  }
+
+  function openModal(type, data = null) {
+    if (type === 'hotel') {
+      document.getElementById('hotelModalTitle').textContent = data ? 'Hotel bearbeiten' : 'Hotel hinzufügen';
+      document.getElementById('hotelId').value = data?._id || '';
+      document.getElementById('hotelName').value = data?.name || '';
+      document.getElementById('hotelOrt').value = data?.ort || '';
+      document.getElementById('hotelLand').value = data?.land || '';
+      document.getElementById('hotelSterne').value = data?.sterne || '3';
+      document.getElementById('hotelPreis').value = data?.preisProNacht || '';
+      document.getElementById('hotelBeschreibung').value = data?.beschreibung || '';
+      document.getElementById('hotelModal').classList.add('open');
+    } else if (type === 'flight') {
+      document.getElementById('flightModalTitle').textContent = data ? 'Flug bearbeiten' : 'Flug hinzufügen';
+      document.getElementById('flightId').value = data?._id || '';
+      document.getElementById('flightNummer').value = data?.flugnummer || '';
+      document.getElementById('flightAirline').value = data?.airline || '';
+      document.getElementById('flightAbflug').value = data?.abflugort || '';
+      document.getElementById('flightZiel').value = data?.zielort || '';
+      document.getElementById('flightAbflugzeit').value = data?.abflugzeit ? new Date(data.abflugzeit).toISOString().slice(0,16) : '';
+      document.getElementById('flightAnkunft').value = data?.ankunftzeit ? new Date(data.ankunftzeit).toISOString().slice(0,16) : '';
+      document.getElementById('flightPreis').value = data?.preis || '';
+      document.getElementById('flightModal').classList.add('open');
+    } else if (type === 'rental') {
+      document.getElementById('rentalModalTitle').textContent = data ? 'Mietwagen bearbeiten' : 'Mietwagen hinzufügen';
+      document.getElementById('rentalId').value = data?._id || '';
+      document.getElementById('rentalMarke').value = data?.marke || '';
+      document.getElementById('rentalModell').value = data?.modell || '';
+      document.getElementById('rentalOrt').value = data?.ort || '';
+      document.getElementById('rentalKategorie').value = data?.kategorie || 'Mittel';
+      document.getElementById('rentalPreis').value = data?.preisProTag || '';
+      document.getElementById('rentalVerfuegbar').value = data?.verfuegbar !== false ? 'true' : 'false';
+      document.getElementById('rentalModal').classList.add('open');
+    }
+  }
+
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+  function filterTable(tableId, query) {
+    const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+    rows.forEach(row => {
+      row.style.display = row.textContent.toLowerCase().includes(query.toLowerCase()) ? '' : 'none';
+    });
+  }
+
+  // ── HOTELS ──
+  async function loadHotels() {
+    const res = await fetch(`${API}/hotels`);
+    const hotels = await res.json();
+    document.getElementById('hotelCount').textContent = hotels.length;
+    const body = document.getElementById('hotelBody');
+    if (!hotels.length) { body.innerHTML = '<tr><td colspan="6" class="empty-state">Noch keine Hotels vorhanden.</td></tr>'; return; }
+    body.innerHTML = hotels.map(h => `
+      <tr>
+        <td><strong>${h.name}</strong></td>
+        <td class="td-muted">${h.ort}</td>
+        <td class="td-muted">${h.land}</td>
+        <td>${'★'.repeat(h.sterne || 0)}</td>
+        <td>€${h.preisProNacht}</td>
+        <td><div class="d-flex gap-2">
+          <button class="btn btn-sm btn-outline-secondary" onclick='openModal("hotel", ${JSON.stringify(h)})'>Bearbeiten</button>
+          <button class="btn btn-sm btn-outline-danger" onclick="deleteItem('hotels','${h._id}', loadHotels)">Löschen</button>
+        </div></td>
+      </tr>`).join('');
+  }
+
+  async function saveHotel() {
+    const id = document.getElementById('hotelId').value;
+    const body = {
+      name: document.getElementById('hotelName').value,
+      ort: document.getElementById('hotelOrt').value,
+      land: document.getElementById('hotelLand').value,
+      sterne: parseInt(document.getElementById('hotelSterne').value),
+      preisProNacht: parseFloat(document.getElementById('hotelPreis').value),
+      beschreibung: document.getElementById('hotelBeschreibung').value
+    };
+    const url = id ? `${API}/hotels/${id}` : `${API}/hotels`;
+    const method = id ? 'PUT' : 'POST';
+    const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (res.ok) { closeModal('hotelModal'); loadHotels(); showToast(id ? 'Hotel aktualisiert ✓' : 'Hotel erstellt ✓'); }
+    else showToast('Fehler beim Speichern');
+  }
+
+  // ── FLÜGE ──
+  async function loadFlights() {
+    const res = await fetch(`${API}/flights`);
+    const flights = await res.json();
+    document.getElementById('flightCount').textContent = flights.length;
+    const body = document.getElementById('flightBody');
+    if (!flights.length) { body.innerHTML = '<tr><td colspan="7" class="empty-state">Noch keine Flüge vorhanden.</td></tr>'; return; }
+    body.innerHTML = flights.map(f => `
+      <tr>
+        <td><strong>${f.flugnummer}</strong></td>
+        <td class="td-muted">${f.abflugort}</td>
+        <td class="td-muted">${f.zielort}</td>
+        <td class="td-muted">${f.airline}</td>
+        <td class="td-muted">${new Date(f.abflugzeit).toLocaleString('de-DE')}</td>
+        <td>€${f.preis}</td>
+        <td><div class="d-flex gap-2">
+          <button class="btn btn-sm btn-outline-secondary" onclick='openModal("flight", ${JSON.stringify(f)})'>Bearbeiten</button>
+          <button class="btn btn-sm btn-outline-danger" onclick="deleteItem('flights','${f._id}', loadFlights)">Löschen</button>
+        </div></td>
+      </tr>`).join('');
+  }
+
+  async function saveFlight() {
+    const id = document.getElementById('flightId').value;
+    const body = {
+      flugnummer: document.getElementById('flightNummer').value,
+      airline: document.getElementById('flightAirline').value,
+      abflugort: document.getElementById('flightAbflug').value,
+      zielort: document.getElementById('flightZiel').value,
+      abflugzeit: document.getElementById('flightAbflugzeit').value,
+      ankunftzeit: document.getElementById('flightAnkunft').value,
+      preis: parseFloat(document.getElementById('flightPreis').value)
+    };
+    const url = id ? `${API}/flights/${id}` : `${API}/flights`;
+    const method = id ? 'PUT' : 'POST';
+    const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (res.ok) { closeModal('flightModal'); loadFlights(); showToast(id ? 'Flug aktualisiert ✓' : 'Flug erstellt ✓'); }
+    else showToast('Fehler beim Speichern');
+  }
+
+  // ── MIETWAGEN ──
+  async function loadRentals() {
+    const res = await fetch(`${API}/rentals`);
+    const cars = await res.json();
+    document.getElementById('rentalCount').textContent = cars.length;
+    const body = document.getElementById('rentalBody');
+    if (!cars.length) { body.innerHTML = '<tr><td colspan="7" class="empty-state">Noch keine Mietwagen vorhanden.</td></tr>'; return; }
+    body.innerHTML = cars.map(c => `
+      <tr>
+        <td><strong>${c.marke}</strong></td>
+        <td class="td-muted">${c.modell}</td>
+        <td class="td-muted">${c.ort}</td>
+        <td class="td-muted">${c.kategorie || '—'}</td>
+        <td>€${c.preisProTag}</td>
+        <td><span class="badge ${c.verfuegbar ? 'bg-success' : 'bg-danger'}">${c.verfuegbar ? 'Verfügbar' : 'Nicht verfügbar'}</span></td>
+        <td><div class="d-flex gap-2">
+          <button class="btn btn-sm btn-outline-secondary" onclick='openModal("rental", ${JSON.stringify(c)})'>Bearbeiten</button>
+          <button class="btn btn-sm btn-outline-danger" onclick="deleteItem('rentals','${c._id}', loadRentals)">Löschen</button>
+        </div></td>
+      </tr>`).join('');
+  }
+
+  async function saveRental() {
+    const id = document.getElementById('rentalId').value;
+    const body = {
+      marke: document.getElementById('rentalMarke').value,
+      modell: document.getElementById('rentalModell').value,
+      ort: document.getElementById('rentalOrt').value,
+      kategorie: document.getElementById('rentalKategorie').value,
+      preisProTag: parseFloat(document.getElementById('rentalPreis').value),
+      verfuegbar: document.getElementById('rentalVerfuegbar').value === 'true'
+    };
+    const url = id ? `${API}/rentals/${id}` : `${API}/rentals`;
+    const method = id ? 'PUT' : 'POST';
+    const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (res.ok) { closeModal('rentalModal'); loadRentals(); showToast(id ? 'Mietwagen aktualisiert ✓' : 'Mietwagen erstellt ✓'); }
+    else showToast('Fehler beim Speichern');
+  }
+
+  // ── BEWERTUNGEN ──
+  async function loadRatings() {
+    const res = await fetch(`${API}/ratings`);
+    const ratings = await res.json();
+    document.getElementById('ratingCount').textContent = ratings.length;
+    const body = document.getElementById('ratingBody');
+    if (!ratings.length) { body.innerHTML = '<tr><td colspan="6" class="empty-state">Noch keine Bewertungen vorhanden.</td></tr>'; return; }
+    body.innerHTML = ratings.map(r => `
+      <tr>
+        <td><span class="badge bg-secondary">${r.serviceTyp}</span></td>
+        <td>${'★'.repeat(r.bewertung)}${'☆'.repeat(5 - r.bewertung)}</td>
+        <td class="td-muted">${r.kommentar || '—'}</td>
+        <td class="td-muted">${r.autor}</td>
+        <td class="td-muted">${new Date(r.createdAt).toLocaleDateString('de-DE')}</td>
+        <td><button class="btn btn-sm btn-outline-danger" onclick="deleteItem('ratings','${r._id}', loadRatings)">Löschen</button></td>
+      </tr>`).join('');
+  }
+
+  // ── DELETE ──
+  async function deleteItem(resource, id, reload) {
+    if (!confirm('Wirklich löschen?')) return;
+    const res = await fetch(`${API}/${resource}/${id}`, { method: 'DELETE' });
+    if (res.ok) { reload(); showToast('Erfolgreich gelöscht ✓'); }
+    else showToast('Fehler beim Löschen');
+  }
+
+  init();
+
+  function openLogo() { document.getElementById('logoLightbox').classList.add('open'); }
+  function closeLogo() { document.getElementById('logoLightbox').classList.remove('open'); }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLogo(); });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
